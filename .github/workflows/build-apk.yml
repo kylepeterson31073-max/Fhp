@@ -25,14 +25,20 @@ jobs:
         with:
           node-version: 22
 
-      - name: Setup Java JDK 17
+      - name: Setup Java JDK 21
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
-          java-version: 17
+          distribution: 'temurin'
+          java-version: '21'
 
-      - name: Setup Android SDK
+      - name: Setup Android SDK & Licenses
         uses: android-actions/setup-android@v3
+        with:
+          packages: 'platforms;android-35 build-tools;35.0.0'
+
+      - name: Accept Android Licenses
+        run: |
+          yes | sdkmanager --licenses || true
 
       - name: Install NPM Dependencies
         run: npm install --legacy-peer-deps --no-audit --no-fund
@@ -42,38 +48,46 @@ jobs:
 
       - name: Initialize & Sync Android Platform
         run: |
-          if [ ! -f "android/gradlew" ]; then
-            rm -rf android
-            npx cap add android
-          fi
+          rm -rf android
+          npx cap add android
           npx cap sync android
 
-      - name: Ensure Android Telephony & Hardware Permissions
+      - name: Configure Android Permissions & Build Settings
         run: |
-          MANIFEST="android/app/src/main/AndroidManifest.xml"
-          if [ -f "$MANIFEST" ]; then
-            # Inject permissions if not already present
-            for PERM in "android.permission.CALL_PHONE" "android.permission.SEND_SMS" "android.permission.RECEIVE_SMS" "android.permission.READ_PHONE_STATE" "android.permission.ACCESS_FINE_LOCATION" "android.permission.ACCESS_COARSE_LOCATION" "android.permission.POST_NOTIFICATIONS"; do
-              if ! grep -q "$PERM" "$MANIFEST"; then
-                sed -i "/<\/manifest>/i \    <uses-permission android:name=\"$PERM\" />" "$MANIFEST"
-              fi
-            done
-          fi
+          node -e '
+          const fs = require("fs");
+          const manifestPath = "android/app/src/main/AndroidManifest.xml";
+          if (fs.existsSync(manifestPath)) {
+            let manifest = fs.readFileSync(manifestPath, "utf8");
+            const permissions = [
+              "android.permission.INTERNET",
+              "android.permission.CALL_PHONE",
+              "android.permission.SEND_SMS",
+              "android.permission.RECEIVE_SMS",
+              "android.permission.READ_PHONE_STATE",
+              "android.permission.ACCESS_FINE_LOCATION",
+              "android.permission.ACCESS_COARSE_LOCATION",
+              "android.permission.POST_NOTIFICATIONS"
+            ];
+            
+            permissions.forEach(perm => {
+              if (!manifest.includes(perm)) {
+                manifest = manifest.replace("</manifest>", "    <uses-permission android:name=\"" + perm + "\" />\n</manifest>");
+              }
+            });
+            fs.writeFileSync(manifestPath, manifest, "utf8");
+            console.log("AndroidManifest.xml updated with native telephony permissions.");
+          }
+          '
 
       - name: Grant Execute Permission to Gradle
         run: |
-          if [ -f "android/gradlew" ]; then
-            chmod +x android/gradlew
-          fi
+          chmod +x android/gradlew
 
       - name: Build Android Debug APK
         run: |
           cd android
-          if [ -f "./gradlew" ]; then
-            ./gradlew assembleDebug --stacktrace --no-daemon
-          else
-            gradle assembleDebug --stacktrace
-          fi
+          ./gradlew assembleDebug --stacktrace --no-daemon -x lint
 
       - name: Upload APK as Workflow Artifact
         uses: actions/upload-artifact@v4
