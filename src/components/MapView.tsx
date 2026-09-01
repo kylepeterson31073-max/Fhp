@@ -14,7 +14,8 @@ import {
   Plus,
   Crosshair,
   ExternalLink,
-  Phone
+  Phone,
+  X
 } from 'lucide-react';
 
 interface MapViewProps {
@@ -329,99 +330,88 @@ export const MapView: React.FC<MapViewProps> = ({
       </div>
 
       {/* Map Container */}
-      <div ref={mapContainerRef} className="w-full h-full min-h-[220px] sm:min-h-[360px] rounded-xl overflow-hidden" />
+      <div ref={mapContainerRef} className="w-full h-full min-h-[200px] sm:min-h-[360px] rounded-xl overflow-hidden" />
 
-      {/* Location Floating HUD (from High-Density theme) when no resource selected */}
+      {/* Location Floating HUD (Compact on Mobile) */}
       {!selectedResource && (
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-[900] bg-white/95 backdrop-blur-md border border-slate-200 px-3.5 py-2 rounded-xl shadow-md flex items-center gap-4 max-w-[92%]">
-          <div className="flex flex-col">
-            <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider">GPS Coverage Area</span>
-            <span className="text-xs font-semibold text-slate-800 truncate">
-              {userCoords ? `${userCoords.lat.toFixed(4)}, ${userCoords.lng.toFixed(4)}` : 'Seattle Metro Area & Downtown'}
+        <div className="absolute bottom-2 sm:bottom-3 left-1/2 -translate-x-1/2 z-[900] bg-white/95 backdrop-blur-md border border-slate-200 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl shadow-md flex items-center gap-2 sm:gap-4 max-w-[95%]">
+          <div className="flex flex-col min-w-0">
+            <span className="text-[8px] sm:text-[9px] text-slate-400 uppercase font-bold tracking-wider">GPS Area</span>
+            <span className="text-[11px] sm:text-xs font-semibold text-slate-800 truncate">
+              {userCoords ? `${userCoords.lat.toFixed(3)}, ${userCoords.lng.toFixed(3)}` : 'Seattle Metro'}
             </span>
           </div>
-          <div className="h-6 w-[1px] bg-slate-200 hidden sm:block"></div>
-          <div className="flex items-center gap-1.5 shrink-0">
-            <button
-              onClick={onGetUserLocation}
-              className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-lg text-xs font-semibold transition"
-            >
-              Find Near Me
-            </button>
-          </div>
+          <div className="h-4 sm:h-6 w-[1px] bg-slate-200"></div>
+          <button
+            onClick={onGetUserLocation}
+            className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-[10px] sm:text-xs font-bold transition whitespace-nowrap"
+          >
+            Near Me
+          </button>
         </div>
       )}
 
-      {/* Selected Resource Bottom Preview Banner (High Density card) */}
+      {/* Selected Resource Bottom Preview Banner (Mobile Optimized) */}
       {selectedResource && (
-        <div className="absolute bottom-3 left-3 right-3 z-[1000] bg-white rounded-xl shadow-lg border border-indigo-200 p-3 animate-slide-up flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div className="flex items-start gap-3">
-            <div className="w-9 h-9 rounded-lg bg-indigo-50 border border-indigo-200 flex items-center justify-center text-lg shrink-0">
+        <div className="absolute bottom-2 sm:bottom-3 left-2 sm:left-3 right-2 sm:right-3 z-[1000] bg-white rounded-xl shadow-xl border border-indigo-200 p-2.5 sm:p-3 animate-slide-up flex flex-col md:flex-row md:items-center justify-between gap-2 sm:gap-3 max-h-[60vh] overflow-y-auto">
+          <div className="flex items-start gap-2.5 min-w-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-indigo-50 border border-indigo-200 flex items-center justify-center text-base sm:text-lg shrink-0">
               {CATEGORY_EMOJIS[selectedResource.category] || '📍'}
             </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-bold text-sm text-slate-900 font-heading">{selectedResource.name}</h3>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <h3 className="font-bold text-xs sm:text-sm text-slate-900 font-heading truncate">{selectedResource.name}</h3>
                 
                 {selectedResource.verificationTier === 'verified' || selectedResource.verified ? (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-bold">
-                    <ShieldCheck className="w-3 h-3 text-emerald-600" /> Agency Verified
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-[9px] sm:text-[10px] font-bold">
+                    <ShieldCheck className="w-3 h-3 text-emerald-600" /> Verified
                   </span>
-                ) : selectedResource.verificationTier === 'community_verified' ? (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-md bg-blue-50 text-blue-800 border border-blue-200 text-[10px] font-bold">
-                    👥 Community Confirmed ({selectedResource.upvotesCount || 3}+)
-                  </span>
-                ) : selectedResource.verificationTier === 'flagged_inaccurate' ? (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-md bg-rose-50 text-rose-800 border border-rose-200 text-[10px] font-bold">
-                    ⚠️ Needs Update
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold">
-                    ⏳ Community Report (Pending)
-                  </span>
-                )}
-
-                {selectedResource.petFriendly && (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-md bg-indigo-50 text-indigo-800 border border-indigo-200 text-[10px] font-bold">
-                    🐾 Pet Friendly
-                  </span>
-                )}
+                ) : null}
               </div>
-              <p className="text-xs text-slate-600 line-clamp-1 mt-0.5">{selectedResource.description}</p>
-              <p className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-2">
-                <span>📍 {selectedResource.address}, {selectedResource.city}</span>
+
+              <p className="text-[11px] text-slate-600 truncate mt-0.5">{selectedResource.address}</p>
+
+              <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-500 font-medium">
                 {selectedResource.bedsAvailable !== undefined && (
-                  <span className="font-semibold text-indigo-700">🛏️ {selectedResource.bedsAvailable} open beds</span>
+                  <span className="font-bold text-indigo-700">🛏️ {selectedResource.bedsAvailable} Beds</span>
                 )}
-              </p>
+                {selectedResource.petFriendly && (
+                  <span className="font-bold text-emerald-700">🐾 Pets OK</span>
+                )}
+                <span>⏱️ {selectedResource.hours}</span>
+              </div>
             </div>
+
+            <button
+              onClick={() => onSelectResource(null as any)}
+              className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 shrink-0"
+              title="Close card"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
-            <button
-              onClick={() => onSelectResource(selectedResource)}
-              className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold flex items-center gap-1 transition border border-indigo-200"
-            >
-              <span>Full Details & Reviews</span>
-            </button>
-            <a
-              href={`https://www.google.com/maps/dir/?api=1&destination=${selectedResource.lat},${selectedResource.lng}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs transition"
-            >
-              <Navigation className="w-3.5 h-3.5" />
-              <span>Directions</span>
-            </a>
+          <div className="flex items-center gap-1.5 justify-end pt-1 md:pt-0 border-t md:border-t-0 border-slate-100">
             {selectedResource.phone && (
               <a
-                href={`tel:${selectedResource.phone.replace(/[^0-9]/g, '')}`}
-                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition border border-slate-200"
+                href={`tel:${selectedResource.phone}`}
+                className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-[11px] font-bold flex items-center gap-1 transition"
               >
-                <Phone className="w-3.5 h-3.5" />
+                <Phone className="w-3 h-3 text-slate-600" />
                 <span>Call</span>
               </a>
             )}
+            <a
+              href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+                selectedResource.address
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[11px] font-bold flex items-center gap-1 transition"
+            >
+              <Navigation className="w-3 h-3" />
+              <span>Directions</span>
+            </a>
           </div>
         </div>
       )}

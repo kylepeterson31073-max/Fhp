@@ -418,22 +418,22 @@ export const AiAdvisorsHub: React.FC<AiAdvisorsHubProps> = ({
   };
 
   return (
-    <div className="w-full h-full flex flex-col md:flex-row bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden min-h-[500px] md:min-h-[640px] relative">
+    <div className="w-full max-w-full min-w-0 grid grid-cols-1 lg:grid-cols-12 bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden min-h-[520px] lg:min-h-[660px] relative">
       
-      {/* Specialists Selector (Horizontal pills on mobile, Vertical list on desktop) */}
-      <div className="w-full md:w-72 border-b md:border-b-0 md:border-r border-slate-200 bg-slate-50/70 p-2.5 sm:p-3 flex flex-col justify-between shrink-0">
-        <div>
+      {/* Specialists Selector (Responsive Grid on Mobile/Tablet, Vertical Sidebar on Desktop) */}
+      <div className="lg:col-span-4 xl:col-span-3 min-w-0 border-b lg:border-b-0 lg:border-r border-slate-200 bg-slate-50/70 p-2.5 sm:p-3 flex flex-col justify-between">
+        <div className="w-full min-w-0">
           {/* Top Brand Greeting */}
-          <div className="flex items-center gap-2 mb-2 md:mb-3 p-1">
+          <div className="flex items-center gap-2 mb-2 sm:mb-2.5 p-1">
             <DaisyMascotBadge size="sm" animate={true} />
-            <div>
-              <h2 className="text-xs font-bold text-slate-900 font-heading">Daisy's Care Team</h2>
-              <p className="text-[10px] text-slate-500 font-medium">6 Specialized AI Advocates</p>
+            <div className="min-w-0">
+              <h2 className="text-xs font-bold text-slate-900 font-heading truncate">Daisy's Care Team</h2>
+              <p className="text-[10px] text-slate-500 font-medium truncate">6 Specialized AI Advocates</p>
             </div>
           </div>
 
-          {/* Specialists List / Pills */}
-          <div className="flex md:flex-col gap-1.5 overflow-x-auto md:overflow-visible pb-1 md:pb-0 no-scrollbar">
+          {/* Specialists List / Responsive CSS Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-1.5 w-full min-w-0">
             {SPECIALISTS.map((s) => {
               const Icon = s.avatarIcon;
               const isSelected = selectedRole === s.role;
@@ -441,11 +441,11 @@ export const AiAdvisorsHub: React.FC<AiAdvisorsHubProps> = ({
                 <button
                   key={s.role}
                   onClick={() => setSelectedRole(s.role)}
-                  className={`p-1.5 md:p-2 rounded-xl text-left transition flex items-center gap-2 border shrink-0 md:shrink md:w-full ${
+                  className={`p-1.5 sm:p-2 rounded-xl text-left transition flex items-center gap-2 border w-full min-w-0 ${
                     isSelected ? s.activeColor : 'bg-white text-slate-700 border-slate-200/80 hover:bg-slate-100'
                   }`}
                 >
-                  <div className={`w-6 h-6 md:w-7 md:h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                  <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center shrink-0 ${
                     isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
                   }`}>
                     {s.role === 'daisy_general' ? (
@@ -455,11 +455,11 @@ export const AiAdvisorsHub: React.FC<AiAdvisorsHubProps> = ({
                     )}
                   </div>
 
-                  <div className="min-w-0 flex-1 whitespace-nowrap md:whitespace-normal">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-[11px] md:text-xs truncate">{s.name}</span>
+                      <span className="font-bold text-[11px] md:text-xs truncate block">{s.name}</span>
                     </div>
-                    <p className={`text-[9px] md:text-[10px] truncate hidden sm:block ${isSelected ? 'text-white/80' : 'text-slate-500'}`}>
+                    <p className={`text-[9px] md:text-[10px] truncate ${isSelected ? 'text-white/80' : 'text-slate-500'}`}>
                       {s.badge}
                     </p>
                   </div>
@@ -470,7 +470,7 @@ export const AiAdvisorsHub: React.FC<AiAdvisorsHubProps> = ({
         </div>
 
         {/* Autonomous Dispatch Banner in Sidebar */}
-        <div className="hidden md:block mt-3 p-2.5 rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-200/70 text-indigo-950 text-xs">
+        <div className="hidden lg:block mt-3 p-2.5 rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-200/70 text-indigo-950 text-xs">
           <div className="flex items-center gap-1.5 font-bold mb-1">
             <Zap className="w-3.5 h-3.5 text-indigo-600" />
             <span className="text-[11px] font-heading font-bold">Autonomous E-Filing</span>
@@ -481,8 +481,8 @@ export const AiAdvisorsHub: React.FC<AiAdvisorsHubProps> = ({
         </div>
       </div>
 
-      {/* RIGHT MAIN PANEL: Active Chat with Specialist */}
-      <div className="flex-1 flex flex-col bg-white min-w-0">
+      {/* RIGHT MAIN PANEL: Active Chat with Specialist (Responsive CSS Grid column) */}
+      <div className="lg:col-span-8 xl:col-span-9 min-w-0 flex flex-col bg-white h-full justify-between">
         
         {/* Chat Header */}
         <div className="p-3 border-b border-slate-100 flex items-center justify-between gap-3 bg-slate-50/40">
@@ -625,57 +625,53 @@ export const AiAdvisorsHub: React.FC<AiAdvisorsHubProps> = ({
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Quick Sample Questions Pills */}
-        <div className="px-3 py-1.5 bg-slate-50/70 border-t border-slate-100 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-          <span className="text-[10px] font-bold uppercase text-slate-400 shrink-0">Try asking:</span>
+        {/* Quick Sample Questions Pills (Responsive CSS Grid) */}
+        <div className="p-2 bg-slate-50/70 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1.5 w-full min-w-0">
           {currentSpecialist.samplePrompts.map((prompt, idx) => (
             <button
               key={idx}
               onClick={() => handleSendMessage(prompt)}
-              className="px-2 py-0.5 rounded-lg bg-white border border-slate-200 hover:border-indigo-300 text-slate-700 text-[11px] whitespace-nowrap transition shadow-2xs font-medium"
+              className="px-2 py-1 rounded-lg bg-white border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50 text-slate-700 text-[11px] text-left transition shadow-2xs font-medium truncate w-full min-w-0"
+              title={prompt}
             >
-              {prompt}
+              💡 {prompt}
             </button>
           ))}
         </div>
 
-        {/* 1-Click Autonomous Action Bar */}
-        <div className="px-3 py-1.5 bg-indigo-50/40 border-t border-slate-200 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-          <span className="text-[10px] font-bold uppercase text-indigo-800 flex items-center gap-1 shrink-0">
-            <Zap className="w-3 h-3 text-indigo-600" /> 1-Click Dispatch:
-          </span>
-
+        {/* 1-Click Autonomous Action Bar (Responsive CSS Grid) */}
+        <div className="p-2 bg-indigo-50/40 border-t border-slate-200 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-1.5 w-full min-w-0">
           <button
             onClick={() => handleSendMessage('Auto-file an expedited SNAP / EBT food stamps application and generate complete email, text, and phone call IVR scripts for me.')}
-            className="px-2 py-1 bg-white hover:bg-indigo-50 text-indigo-800 border border-indigo-200 rounded-md text-[10px] font-bold whitespace-nowrap transition shadow-2xs"
+            className="px-1.5 py-1 bg-white hover:bg-indigo-50 text-indigo-800 border border-indigo-200 rounded-md text-[10px] font-bold transition shadow-2xs text-center truncate min-w-0"
           >
             🍱 E-File SNAP (EBT)
           </button>
 
           <button
             onClick={() => handleSendMessage('Auto-file an Emergency Housing Voucher application for me with pet-friendly shelter intake instructions.')}
-            className="px-2 py-1 bg-white hover:bg-indigo-50 text-indigo-800 border border-indigo-200 rounded-md text-[10px] font-bold whitespace-nowrap transition shadow-2xs"
+            className="px-1.5 py-1 bg-white hover:bg-indigo-50 text-indigo-800 border border-indigo-200 rounded-md text-[10px] font-bold transition shadow-2xs text-center truncate min-w-0"
           >
             🛏️ Housing Voucher
           </button>
 
           <button
             onClick={() => handleSendMessage('Help me claim a free Lifeline government smartphone and tablet with zero income.')}
-            className="px-2 py-1 bg-white hover:bg-indigo-50 text-indigo-800 border border-indigo-200 rounded-md text-[10px] font-bold whitespace-nowrap transition shadow-2xs"
+            className="px-1.5 py-1 bg-white hover:bg-indigo-50 text-indigo-800 border border-indigo-200 rounded-md text-[10px] font-bold transition shadow-2xs text-center truncate min-w-0"
           >
             📱 Free Phone & Data
           </button>
 
           <button
             onClick={() => handleSendMessage('Draft a Washington State DMV homeless ID fee waiver affidavit and birth certificate request package.')}
-            className="px-2 py-1 bg-white hover:bg-indigo-50 text-indigo-800 border border-indigo-200 rounded-md text-[10px] font-bold whitespace-nowrap transition shadow-2xs"
+            className="px-1.5 py-1 bg-white hover:bg-indigo-50 text-indigo-800 border border-indigo-200 rounded-md text-[10px] font-bold transition shadow-2xs text-center truncate min-w-0"
           >
             🪪 Free ID Waiver
           </button>
 
           <button
             onClick={() => handleSendMessage('Draft an emergency veterinary care assistance voucher and clinic outreach script for my pet.')}
-            className="px-2 py-1 bg-white hover:bg-indigo-50 text-indigo-800 border border-indigo-200 rounded-md text-[10px] font-bold whitespace-nowrap transition shadow-2xs"
+            className="px-1.5 py-1 bg-white hover:bg-indigo-50 text-indigo-800 border border-indigo-200 rounded-md text-[10px] font-bold transition shadow-2xs text-center truncate min-w-0 col-span-2 sm:col-span-1"
           >
             🐾 Pet Clinic Voucher
           </button>

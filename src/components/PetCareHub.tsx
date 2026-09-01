@@ -131,56 +131,56 @@ export const PetCareHub: React.FC<PetCareHubProps> = ({
         </div>
       </div>
 
-      {/* Navigation Pills */}
-      <div className="flex items-center gap-1.5 border-b border-slate-200 pb-2.5 overflow-x-auto no-scrollbar">
+      {/* Navigation Pills (Responsive CSS Grid) */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 border-b border-slate-200 pb-2.5 w-full min-w-0">
         <button
           onClick={() => setActiveTab('pets')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
+          className={`px-3 py-2 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-1.5 w-full min-w-0 text-center ${
             activeTab === 'pets'
               ? 'bg-indigo-600 text-white shadow-xs'
               : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
           }`}
         >
-          <Dog className="w-3.5 h-3.5" />
-          <span>My Pets ({petsList.length})</span>
+          <Dog className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">My Pets ({petsList.length})</span>
         </button>
 
         <button
           onClick={() => setActiveTab('rights_card')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
+          className={`px-3 py-2 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-1.5 w-full min-w-0 text-center ${
             activeTab === 'rights_card'
               ? 'bg-indigo-600 text-white shadow-xs'
               : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
           }`}
         >
-          <FileCheck className="w-3.5 h-3.5" />
-          <span>Service Animal / ESA Rights Card</span>
+          <FileCheck className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">ESA / Rights Card</span>
         </button>
 
         <button
           onClick={() => setActiveTab('street_tips')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
+          className={`px-3 py-2 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-1.5 w-full min-w-0 text-center ${
             activeTab === 'street_tips'
               ? 'bg-indigo-600 text-white shadow-xs'
               : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
           }`}
         >
-          <ShieldCheck className="w-3.5 h-3.5" />
-          <span>Street Pet Safety & Weather Care</span>
+          <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">Street Pet Care</span>
         </button>
       </div>
 
       {/* TAB 1: PET PROFILES */}
       {activeTab === 'pets' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
+        <div className="space-y-4 w-full min-w-0">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <h3 className="font-bold text-sm text-slate-900 font-heading">Companion Pet Profiles</h3>
               <p className="text-[11px] text-slate-500">Keep vaccination & medical notes handy for pet-friendly shelters and free food pantries.</p>
             </div>
             <button
               onClick={() => setShowAddPet(!showAddPet)}
-              className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs transition"
+              className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs transition shrink-0 self-start sm:self-auto"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>{showAddPet ? 'Cancel' : 'Add Companion Pet'}</span>
@@ -189,11 +189,11 @@ export const PetCareHub: React.FC<PetCareHubProps> = ({
 
           {/* Add Pet Form */}
           {showAddPet && (
-            <form onSubmit={handleAddPet} className="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-200 shadow-xs space-y-3 animate-slide-up text-xs">
+            <form onSubmit={handleAddPet} className="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-200 shadow-xs space-y-3 animate-slide-up text-xs w-full min-w-0">
               <h4 className="font-bold text-xs text-indigo-950 font-heading">Add Companion Pet Profile</h4>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
-                <div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 w-full min-w-0">
+                <div className="min-w-0">
                   <label className="block font-semibold text-slate-700 mb-1">Pet's Name *</label>
                   <input
                     type="text"
@@ -205,7 +205,7 @@ export const PetCareHub: React.FC<PetCareHubProps> = ({
                   />
                 </div>
 
-                <div>
+                <div className="min-w-0">
                   <label className="block font-semibold text-slate-700 mb-1">Species</label>
                   <select
                     value={petSpecies}
@@ -218,7 +218,7 @@ export const PetCareHub: React.FC<PetCareHubProps> = ({
                   </select>
                 </div>
 
-                <div>
+                <div className="min-w-0 sm:col-span-2 md:col-span-1">
                   <label className="block font-semibold text-slate-700 mb-1">Breed / Description</label>
                   <input
                     type="text"
@@ -230,7 +230,7 @@ export const PetCareHub: React.FC<PetCareHubProps> = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full min-w-0">
                 <div className="flex items-center gap-2 pt-1">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -256,7 +256,7 @@ export const PetCareHub: React.FC<PetCareHubProps> = ({
                 </div>
               </div>
 
-              <div>
+              <div className="w-full min-w-0">
                 <label className="block font-semibold text-slate-700 mb-1">Dietary or Medical Notes</label>
                 <input
                   type="text"
@@ -276,8 +276,8 @@ export const PetCareHub: React.FC<PetCareHubProps> = ({
             </form>
           )}
 
-          {/* Pets Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {/* Pets Responsive CSS Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 w-full min-w-0">
             {petsList.length === 0 ? (
               <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-center col-span-2 space-y-1.5">
                 <Dog className="w-8 h-8 text-slate-300 mx-auto" />

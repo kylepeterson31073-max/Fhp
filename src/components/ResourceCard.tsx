@@ -43,7 +43,7 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({
   return (
     <div
       onClick={() => onSelect(resource)}
-      className={`p-3 rounded-xl border transition-all cursor-pointer bg-white hover:shadow-xs ${
+      className={`p-3 rounded-xl border transition-all cursor-pointer bg-white hover:shadow-xs w-full min-w-0 ${
         isSelected
           ? 'border-indigo-600 ring-2 ring-indigo-500/20 shadow-xs bg-indigo-50/10'
           : 'border-slate-200 hover:border-slate-300'
