@@ -1,0 +1,6 @@
+{
+  "name": "Daisy's Helping Paws",
+  "description": "Crowd-sourced GPS map for homeless & community resources, featuring AI Caseworker form-filler, Doctor, Vet, Lawyer, and Therapist assistance powered by Daisy the rescue pit bull mascot.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
