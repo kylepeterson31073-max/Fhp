@@ -315,7 +315,7 @@ ${filledResult.submissionInstructions?.map((ins: string, i: number) => `${i + 1}
         <div className="lg:col-span-5 space-y-2">
           <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Select Aid Application</h3>
           
-          <div className="space-y-1.5">
+          <div className="flex lg:flex-col gap-1.5 overflow-x-auto lg:overflow-visible pb-1.5 lg:pb-0 no-scrollbar">
             {BENEFIT_FORMS.map((form) => {
               const isSelected = form.id === selectedFormId;
               return (
@@ -325,7 +325,7 @@ ${filledResult.submissionInstructions?.map((ins: string, i: number) => `${i + 1}
                     setSelectedFormId(form.id);
                     setFilledResult(null);
                   }}
-                  className={`p-3 rounded-xl border transition cursor-pointer flex flex-col justify-between gap-1.5 ${
+                  className={`p-2.5 sm:p-3 rounded-xl border transition cursor-pointer flex flex-col justify-between gap-1 shrink-0 w-64 lg:w-full ${
                     isSelected
                       ? 'bg-indigo-50 border-indigo-600 shadow-xs ring-2 ring-indigo-500/20'
                       : 'bg-white border-slate-200 hover:border-slate-300'
@@ -333,20 +333,20 @@ ${filledResult.submissionInstructions?.map((ins: string, i: number) => `${i + 1}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs ${
+                      <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center text-xs shrink-0 ${
                         isSelected ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-700'
                       }`}>
                         <FileText className="w-3.5 h-3.5" />
                       </div>
-                      <div>
-                        <h4 className="font-bold text-xs text-slate-900 leading-tight">{form.title}</h4>
-                        <p className="text-[10px] text-slate-500">{form.agencyName}</p>
+                      <div className="min-w-0">
+                        <h4 className="font-bold text-xs text-slate-900 leading-tight truncate">{form.title}</h4>
+                        <p className="text-[10px] text-slate-500 truncate">{form.agencyName}</p>
                       </div>
                     </div>
-                    <span className="text-[10px] font-semibold text-slate-400 whitespace-nowrap">{form.timeToComplete}</span>
+                    <span className="text-[9px] font-semibold text-slate-400 whitespace-nowrap shrink-0">{form.timeToComplete}</span>
                   </div>
 
-                  <p className="text-[11px] text-slate-600 line-clamp-2 leading-relaxed">
+                  <p className="text-[10px] sm:text-[11px] text-slate-600 line-clamp-2 leading-relaxed">
                     {form.description}
                   </p>
                 </div>

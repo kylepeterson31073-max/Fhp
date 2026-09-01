@@ -418,13 +418,13 @@ export const AiAdvisorsHub: React.FC<AiAdvisorsHubProps> = ({
   };
 
   return (
-    <div className="w-full h-full flex flex-col md:flex-row bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden min-h-[640px] relative">
+    <div className="w-full h-full flex flex-col md:flex-row bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden min-h-[500px] md:min-h-[640px] relative">
       
-      {/* LEFT SIDEBAR: Specialists Selector */}
-      <div className="w-full md:w-72 border-b md:border-b-0 md:border-r border-slate-200 bg-slate-50/70 p-3 flex flex-col justify-between shrink-0">
+      {/* Specialists Selector (Horizontal pills on mobile, Vertical list on desktop) */}
+      <div className="w-full md:w-72 border-b md:border-b-0 md:border-r border-slate-200 bg-slate-50/70 p-2.5 sm:p-3 flex flex-col justify-between shrink-0">
         <div>
           {/* Top Brand Greeting */}
-          <div className="flex items-center gap-2.5 mb-3 p-1.5">
+          <div className="flex items-center gap-2 mb-2 md:mb-3 p-1">
             <DaisyMascotBadge size="sm" animate={true} />
             <div>
               <h2 className="text-xs font-bold text-slate-900 font-heading">Daisy's Care Team</h2>
@@ -432,8 +432,8 @@ export const AiAdvisorsHub: React.FC<AiAdvisorsHubProps> = ({
             </div>
           </div>
 
-          {/* Specialists List */}
-          <div className="space-y-1">
+          {/* Specialists List / Pills */}
+          <div className="flex md:flex-col gap-1.5 overflow-x-auto md:overflow-visible pb-1 md:pb-0 no-scrollbar">
             {SPECIALISTS.map((s) => {
               const Icon = s.avatarIcon;
               const isSelected = selectedRole === s.role;
@@ -441,25 +441,25 @@ export const AiAdvisorsHub: React.FC<AiAdvisorsHubProps> = ({
                 <button
                   key={s.role}
                   onClick={() => setSelectedRole(s.role)}
-                  className={`w-full p-2 rounded-xl text-left transition flex items-center gap-2.5 border ${
+                  className={`p-1.5 md:p-2 rounded-xl text-left transition flex items-center gap-2 border shrink-0 md:shrink md:w-full ${
                     isSelected ? s.activeColor : 'bg-white text-slate-700 border-slate-200/80 hover:bg-slate-100'
                   }`}
                 >
-                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                  <div className={`w-6 h-6 md:w-7 md:h-7 rounded-lg flex items-center justify-center shrink-0 ${
                     isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
                   }`}>
                     {s.role === 'daisy_general' ? (
-                      <span className="text-sm">🐾</span>
+                      <span className="text-xs md:text-sm">🐾</span>
                     ) : (
-                      <Icon className="w-3.5 h-3.5" />
+                      <Icon className="w-3 h-3 md:w-3.5 md:h-3.5" />
                     )}
                   </div>
 
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1 whitespace-nowrap md:whitespace-normal">
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-xs truncate">{s.name}</span>
+                      <span className="font-bold text-[11px] md:text-xs truncate">{s.name}</span>
                     </div>
-                    <p className={`text-[10px] truncate ${isSelected ? 'text-white/80' : 'text-slate-500'}`}>
+                    <p className={`text-[9px] md:text-[10px] truncate hidden sm:block ${isSelected ? 'text-white/80' : 'text-slate-500'}`}>
                       {s.badge}
                     </p>
                   </div>
@@ -470,7 +470,7 @@ export const AiAdvisorsHub: React.FC<AiAdvisorsHubProps> = ({
         </div>
 
         {/* Autonomous Dispatch Banner in Sidebar */}
-        <div className="mt-3 p-2.5 rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-200/70 text-indigo-950 text-xs">
+        <div className="hidden md:block mt-3 p-2.5 rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-200/70 text-indigo-950 text-xs">
           <div className="flex items-center gap-1.5 font-bold mb-1">
             <Zap className="w-3.5 h-3.5 text-indigo-600" />
             <span className="text-[11px] font-heading font-bold">Autonomous E-Filing</span>

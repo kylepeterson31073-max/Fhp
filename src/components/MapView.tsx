@@ -246,15 +246,15 @@ export const MapView: React.FC<MapViewProps> = ({
   return (
     <div className="relative w-full h-full flex flex-col">
       {/* Top Floating Filter Bar */}
-      <div className="absolute top-2.5 left-2.5 right-2.5 z-[1000] flex flex-col gap-2 pointer-events-none">
+      <div className="absolute top-1.5 sm:top-2.5 left-1.5 sm:left-2.5 right-1.5 sm:right-2.5 z-[1000] flex flex-col gap-1.5 pointer-events-none">
         
         {/* Category Pills Slider */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar pointer-events-auto bg-white/95 backdrop-blur-md p-1.5 rounded-xl shadow-xs border border-slate-200">
+        <div className="flex items-center gap-1 overflow-x-auto pb-0.5 no-scrollbar pointer-events-auto bg-white/95 backdrop-blur-md p-1 sm:p-1.5 rounded-xl shadow-xs border border-slate-200">
           {categories.map((cat) => (
             <button
               key={cat.id}
               onClick={() => onSelectCategory(cat.id)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap flex items-center gap-1.5 transition ${
+              className={`px-2 sm:px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-semibold whitespace-nowrap flex items-center gap-1 transition ${
                 activeCategory === cat.id
                   ? 'bg-indigo-600 text-white shadow-xs'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -267,69 +267,69 @@ export const MapView: React.FC<MapViewProps> = ({
         </div>
 
         {/* Quick Attribute Badges & Actions */}
-        <div className="flex items-center justify-between gap-2 pointer-events-auto flex-wrap">
-          <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="flex items-center justify-between gap-1.5 pointer-events-auto flex-wrap">
+          <div className="flex items-center gap-1 flex-wrap">
             <button
               onClick={onTogglePetFriendly}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs border transition backdrop-blur-md ${
+              className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-[10px] sm:text-xs font-semibold flex items-center gap-1 shadow-xs border transition backdrop-blur-md ${
                 filterPetFriendly
                   ? 'bg-emerald-600 text-white border-emerald-700'
                   : 'bg-white/95 text-slate-700 border-slate-200 hover:bg-white'
               }`}
             >
-              <Dog className="w-3.5 h-3.5" />
-              <span>Pet Friendly</span>
+              <Dog className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              <span>Pets OK</span>
             </button>
 
             <button
               onClick={onToggleBedsOnly}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs border transition backdrop-blur-md ${
+              className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-[10px] sm:text-xs font-semibold flex items-center gap-1 shadow-xs border transition backdrop-blur-md ${
                 filterBedsOnly
                   ? 'bg-indigo-600 text-white border-indigo-700'
                   : 'bg-white/95 text-slate-700 border-slate-200 hover:bg-white'
               }`}
             >
-              <Bed className="w-3.5 h-3.5" />
-              <span>Open Beds</span>
+              <Bed className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              <span>Beds</span>
             </button>
 
             {onToggleVerifiedOnly && (
               <button
                 onClick={onToggleVerifiedOnly}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs border transition backdrop-blur-md ${
+                className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-[10px] sm:text-xs font-semibold flex items-center gap-1 shadow-xs border transition backdrop-blur-md ${
                   filterVerifiedOnly
                     ? 'bg-emerald-700 text-white border-emerald-800'
                     : 'bg-white/95 text-slate-700 border-slate-200 hover:bg-white'
                 }`}
               >
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Verified Only</span>
+                <ShieldCheck className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-500" />
+                <span>Verified</span>
               </button>
             )}
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             <button
               onClick={onGetUserLocation}
               title="Locate My GPS Position"
-              className="p-1.5 bg-white text-indigo-700 rounded-lg shadow-xs border border-slate-200 hover:bg-indigo-50 transition flex items-center justify-center"
+              className="p-1 sm:p-1.5 bg-white text-indigo-700 rounded-lg shadow-xs border border-slate-200 hover:bg-indigo-50 transition flex items-center justify-center"
             >
-              <Crosshair className="w-4 h-4" />
+              <Crosshair className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
 
             <button
               onClick={onOpenAddModal}
-              className="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-xs font-semibold text-xs flex items-center gap-1.5 transition"
+              className="px-2 py-1 sm:px-2.5 sm:py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-xs font-semibold text-[10px] sm:text-xs flex items-center gap-1 transition"
             >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Report Resource</span>
+              <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              <span className="hidden xs:inline">Report</span>
             </button>
           </div>
         </div>
       </div>
 
       {/* Map Container */}
-      <div ref={mapContainerRef} className="w-full h-full min-h-[420px] rounded-xl overflow-hidden" />
+      <div ref={mapContainerRef} className="w-full h-full min-h-[220px] sm:min-h-[360px] rounded-xl overflow-hidden" />
 
       {/* Location Floating HUD (from High-Density theme) when no resource selected */}
       {!selectedResource && (
