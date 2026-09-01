@@ -42,10 +42,23 @@ jobs:
 
       - name: Initialize & Sync Android Platform
         run: |
-          if [ ! -d "android" ] || [ ! -f "android/build.gradle" ]; then
+          if [ ! -f "android/gradlew" ]; then
+            rm -rf android
             npx cap add android
           fi
           npx cap sync android
+
+      - name: Ensure Android Telephony & Hardware Permissions
+        run: |
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          if [ -f "$MANIFEST" ]; then
+            # Inject permissions if not already present
+            for PERM in "android.permission.CALL_PHONE" "android.permission.SEND_SMS" "android.permission.RECEIVE_SMS" "android.permission.READ_PHONE_STATE" "android.permission.ACCESS_FINE_LOCATION" "android.permission.ACCESS_COARSE_LOCATION" "android.permission.POST_NOTIFICATIONS"; do
+              if ! grep -q "$PERM" "$MANIFEST"; then
+                sed -i "/<\/manifest>/i \    <uses-permission android:name=\"$PERM\" />" "$MANIFEST"
+              fi
+            done
+          fi
 
       - name: Grant Execute Permission to Gradle
         run: |
