@@ -113,14 +113,18 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
   };
 
   // Center coordinate
-  const defaultCenter = userCoords || { lat: 47.6062, lng: -122.3321 }; // Seattle default
-  const currentCenter = selectedResource 
-    ? { lat: selectedResource.lat, lng: selectedResource.lng }
+  const defaultCenter = (userCoords && Number.isFinite(Number(userCoords.lat)) && Number.isFinite(Number(userCoords.lng)))
+    ? { lat: Number(userCoords.lat), lng: Number(userCoords.lng) }
+    : { lat: 47.6062, lng: -122.3321 }; // Seattle default
+
+  const currentCenter = (selectedResource && Number.isFinite(Number(selectedResource.lat)) && Number.isFinite(Number(selectedResource.lng)))
+    ? { lat: Number(selectedResource.lat), lng: Number(selectedResource.lng) }
     : defaultCenter;
 
-  const displayedResources = filterVerifiedOnly
+  const displayedResources = (filterVerifiedOnly
     ? resources.filter((r) => r.verificationTier === 'verified' || r.verificationTier === 'community_verified' || r.verified)
-    : resources;
+    : resources
+  ).filter((r) => Number.isFinite(Number(r.lat)) && Number.isFinite(Number(r.lng)));
 
   const effectiveApiKey = customKey.trim();
 

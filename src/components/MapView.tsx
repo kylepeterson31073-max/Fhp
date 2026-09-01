@@ -88,8 +88,12 @@ export const MapView: React.FC<MapViewProps> = ({
 
     if (!mapInstanceRef.current) {
       // Default to Seattle coordinates or user coords
-      const initialLat = userCoords?.lat || 47.6062;
-      const initialLng = userCoords?.lng || -122.3321;
+      let initialLat = 47.6062;
+      let initialLng = -122.3321;
+      if (userCoords && Number.isFinite(Number(userCoords.lat)) && Number.isFinite(Number(userCoords.lng))) {
+        initialLat = Number(userCoords.lat);
+        initialLng = Number(userCoords.lng);
+      }
 
       const map = L.map(mapContainerRef.current, {
         center: [initialLat, initialLng],
@@ -123,7 +127,10 @@ export const MapView: React.FC<MapViewProps> = ({
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    if (userCoords) {
+    if (userCoords && Number.isFinite(Number(userCoords.lat)) && Number.isFinite(Number(userCoords.lng))) {
+      const uLat = Number(userCoords.lat);
+      const uLng = Number(userCoords.lng);
+
       const customUserIcon = L.divIcon({
         className: 'user-gps-marker',
         html: `
@@ -139,16 +146,20 @@ export const MapView: React.FC<MapViewProps> = ({
       });
 
       if (userMarkerRef.current) {
-        userMarkerRef.current.setLatLng([userCoords.lat, userCoords.lng]);
+        userMarkerRef.current.setLatLng([uLat, uLng]);
       } else {
-        userMarkerRef.current = L.marker([userCoords.lat, userCoords.lng], {
+        userMarkerRef.current = L.marker([uLat, uLng], {
           icon: customUserIcon,
           zIndexOffset: 1000,
         }).addTo(map);
       }
 
       // Fly to user location smoothly
-      map.flyTo([userCoords.lat, userCoords.lng], 14, { duration: 1.2 });
+      try {
+        map.flyTo([uLat, uLng], 14, { duration: 1.2 });
+      } catch (err) {
+        console.warn('Map flyTo failed:', err);
+      }
     }
   }, [userCoords]);
 
@@ -166,6 +177,10 @@ export const MapView: React.FC<MapViewProps> = ({
       : resources;
 
     displayedResources.forEach((res) => {
+      const lat = Number(res.lat);
+      const lng = Number(res.lng);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
       const emoji = CATEGORY_EMOJIS[res.category] || '📍';
       const colors = CATEGORY_COLORS[res.category] || { bg: '#0d9488', border: '#0f766e', text: '#fff' };
       const isSelected = selectedResource?.id === res.id;
@@ -213,11 +228,17 @@ export const MapView: React.FC<MapViewProps> = ({
         iconAnchor: [18, 38],
       });
 
-      const marker = L.marker([res.lat, res.lng], { icon: customIcon });
+      const marker = L.marker([lat, lng], { icon: customIcon });
 
       marker.on('click', () => {
         onSelectResource(res);
-        map.flyTo([res.lat, res.lng], 15, { duration: 0.8 });
+        try {
+          if (Number.isFinite(lat) && Number.isFinite(lng)) {
+            map.flyTo([lat, lng], 15, { duration: 0.8 });
+          }
+        } catch (err) {
+          console.warn('FlyTo on marker click error:', err);
+        }
       });
 
       markerGroup.addLayer(marker);
@@ -228,7 +249,15 @@ export const MapView: React.FC<MapViewProps> = ({
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (map && selectedResource) {
-      map.flyTo([selectedResource.lat, selectedResource.lng], 15, { duration: 0.8 });
+      const lat = Number(selectedResource.lat);
+      const lng = Number(selectedResource.lng);
+      if (Number.isFinite(lat) && Number.isFinite(lng)) {
+        try {
+          map.flyTo([lat, lng], 15, { duration: 0.8 });
+        } catch (err) {
+          console.warn('FlyTo selectedResource error:', err);
+        }
+      }
     }
   }, [selectedResource]);
 

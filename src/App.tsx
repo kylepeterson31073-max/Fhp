@@ -60,12 +60,21 @@ import confetti from 'canvas-confetti';
 const LOCAL_STORAGE_PROFILE_KEY = 'daisy_helping_paws_user_profile_v1';
 
 function calculateDistanceInMiles(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const nLat1 = Number(lat1);
+  const nLon1 = Number(lon1);
+  const nLat2 = Number(lat2);
+  const nLon2 = Number(lon2);
+
+  if (!Number.isFinite(nLat1) || !Number.isFinite(nLon1) || !Number.isFinite(nLat2) || !Number.isFinite(nLon2)) {
+    return 0;
+  }
+
   const R = 3958.8; // Earth's radius in miles
-  const dLat = (lat2 - lat1) * (Math.PI / 180);
-  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const dLat = (nLat2 - nLat1) * (Math.PI / 180);
+  const dLon = (nLon2 - nLon1) * (Math.PI / 180);
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+    Math.cos(nLat1 * (Math.PI / 180)) * Math.cos(nLat2 * (Math.PI / 180)) *
     Math.sin(dLon / 2) * Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return Math.round(R * c * 10) / 10;
@@ -165,10 +174,13 @@ export const App: React.FC = () => {
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          setUserCoords({
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude,
-          });
+          const lat = Number(pos.coords.latitude);
+          const lng = Number(pos.coords.longitude);
+          if (Number.isFinite(lat) && Number.isFinite(lng)) {
+            setUserCoords({ lat, lng });
+          } else {
+            setUserCoords({ lat: 47.6062, lng: -122.3321 });
+          }
         },
         (err) => {
           console.warn('Geolocation denied or unavailable, centering on Seattle default.', err);
