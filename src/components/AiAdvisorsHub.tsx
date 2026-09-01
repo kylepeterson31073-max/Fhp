@@ -482,7 +482,7 @@ export const AiAdvisorsHub: React.FC<AiAdvisorsHubProps> = ({
       </div>
 
       {/* RIGHT MAIN PANEL: Active Chat with Specialist (Responsive CSS Grid column) */}
-      <div className="lg:col-span-8 xl:col-span-9 min-w-0 flex flex-col bg-white h-full justify-between">
+      <div className="lg:col-span-8 xl:col-span-9 min-w-0 flex flex-col bg-white h-[62vh] sm:h-[70vh] lg:h-full justify-between">
         
         {/* Chat Header */}
         <div className="p-3 border-b border-slate-100 flex items-center justify-between gap-3 bg-slate-50/40">

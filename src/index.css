@@ -1,12 +1,18 @@
 @import "tailwindcss";
 
 @layer base {
+  :root {
+    --sat: env(safe-area-inset-top, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px);
+    --sar: env(safe-area-inset-right, 0px);
+  }
   html {
     -webkit-text-size-adjust: 100%;
-    touch-action: manipulation;
     overflow-x: hidden;
     max-width: 100vw;
     font-size: 15px;
+    scroll-behavior: smooth;
   }
   @media (min-width: 640px) {
     html {
@@ -18,18 +24,19 @@
     background-color: #f8fafc;
     color: #0f172a;
     -webkit-font-smoothing: antialiased;
-    overscroll-behavior-y: none;
     overflow-x: hidden;
     width: 100%;
     max-width: 100vw;
     margin: 0;
     padding: 0;
+    -webkit-overflow-scrolling: touch;
   }
   #root {
     width: 100%;
     max-width: 100vw;
     overflow-x: hidden;
     min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     flex-direction: column;
   }
@@ -45,9 +52,29 @@
   background-size: 24px 24px;
 }
 
-/* Safe area padding utilities for mobile edge-to-edge screens */
+/* Safe area padding utilities for mobile edge-to-edge screens and Android APK */
+.safe-top-padding {
+  padding-top: max(env(safe-area-inset-top, 0px), 0px);
+}
+
+.safe-header-padding {
+  padding-top: max(env(safe-area-inset-top, 0px), 6px);
+}
+
 .safe-bottom-padding {
-  padding-bottom: max(env(safe-area-inset-bottom, 16px), 12px);
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px);
+}
+
+.safe-modal-insets {
+  padding-top: max(env(safe-area-inset-top, 0px), 16px);
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
+  padding-left: max(env(safe-area-inset-left, 0px), 12px);
+  padding-right: max(env(safe-area-inset-right, 0px), 12px);
+}
+
+.touch-scrollable {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .no-scrollbar::-webkit-scrollbar {
@@ -76,13 +103,14 @@
   z-index: 9999 !important;
 }
 
-/* High-Density Compact Scrollbar */
+/* High-Density Compact Scrollbar with clear visibility */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgba(241, 245, 249, 0.6);
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
@@ -90,6 +118,16 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+/* Clear Scrollable List Styling */
+.scroll-indicator-fade {
+  mask-image: linear-gradient(to bottom, black calc(100% - 32px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 32px), transparent 100%);
+}
+
+.shadow-bottom-fade {
+  box-shadow: inset 0 -12px 16px -8px rgba(15, 23, 42, 0.12);
 }
 
 /* Smooth App-Wide Transitions */

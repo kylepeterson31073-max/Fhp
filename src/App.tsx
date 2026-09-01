@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Resource, 
   UserProfile, 
@@ -53,7 +53,8 @@ import {
   Users,
   Printer,
   Compass,
-  Bookmark
+  Bookmark,
+  ChevronDown
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -108,6 +109,18 @@ export const App: React.FC = () => {
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mapMobileViewMode, setMapMobileViewMode] = useState<'split' | 'map' | 'list'>('split');
+
+  // Resource List Scroll Detection & Visual Indicator State
+  const resourceListRef = useRef<HTMLDivElement>(null);
+  const [hasMoreBelow, setHasMoreBelow] = useState(false);
+
+  const checkScrollPosition = useCallback(() => {
+    const el = resourceListRef.current;
+    if (!el) return;
+    const isScrollable = el.scrollHeight > el.clientHeight + 8;
+    const isAtBottom = Math.ceil(el.scrollTop + el.clientHeight) >= el.scrollHeight - 16;
+    setHasMoreBelow(isScrollable && !isAtBottom);
+  }, []);
 
   // User Profile State with local persistence
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
@@ -257,6 +270,32 @@ export const App: React.FC = () => {
     return true;
   });
 
+  // Check scroll position whenever filtered resources, view mode, or window resize changes
+  useEffect(() => {
+    // Initial check on tick
+    const timer = setTimeout(checkScrollPosition, 80);
+    const el = resourceListRef.current;
+    if (!el) return () => clearTimeout(timer);
+
+    el.addEventListener('scroll', checkScrollPosition, { passive: true });
+    window.addEventListener('resize', checkScrollPosition);
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => {
+        checkScrollPosition();
+      });
+      resizeObserver.observe(el);
+    }
+
+    return () => {
+      clearTimeout(timer);
+      el.removeEventListener('scroll', checkScrollPosition);
+      window.removeEventListener('resize', checkScrollPosition);
+      if (resizeObserver) resizeObserver.disconnect();
+    };
+  }, [filteredResources, mapMobileViewMode, checkScrollPosition]);
+
   const handleVerifyResource = async (resourceId: string, action: 'confirm' | 'flag', reason?: string) => {
     try {
       const res = await fetch(`/api/resources/${resourceId}/verify`, {
@@ -357,9 +396,9 @@ export const App: React.FC = () => {
   return (
     <div className="min-h-screen max-w-full overflow-x-hidden bg-[#F8FAFC] text-slate-900 flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
       
-      {/* TOP GLOBAL NAVBAR (Clean, Scalable & High Usability) */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-2xs w-full">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-2 flex items-center justify-between gap-3 min-w-0">
+      {/* TOP GLOBAL NAVBAR (Clean, Scalable & High Usability with Android Safe Area Inset) */}
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-2xs w-full pt-[max(env(safe-area-inset-top,0px),0px)]">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-2 sm:py-2.5 flex items-center justify-between gap-2.5 min-w-0">
           
           {/* Brand & Mascot */}
           <div 
@@ -511,10 +550,10 @@ export const App: React.FC = () => {
         </div>
       </header>
 
-      {/* MOBILE MODAL DRAWER OVERLAY (Non-Intrusive, Never Pushes Content Down) */}
+      {/* MOBILE MODAL DRAWER OVERLAY (Non-Intrusive, Safe-Area aware) */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-start justify-end lg:hidden animate-fade-in">
-          <div className="w-full max-w-xs sm:max-w-sm h-full bg-white shadow-2xl p-4 flex flex-col space-y-4 overflow-y-auto">
+          <div className="w-full max-w-xs sm:max-w-sm h-full bg-white shadow-2xl p-4 pt-[max(env(safe-area-inset-top,0px),16px)] pb-[max(env(safe-area-inset-bottom,0px),16px)] flex flex-col space-y-4 overflow-y-auto">
             <div className="flex items-center justify-between border-b pb-3">
               <div className="flex items-center gap-2">
                 <DaisyMascotBadge size="sm" animate={true} />
@@ -666,8 +705,8 @@ export const App: React.FC = () => {
         </div>
       )}
 
-      {/* MAIN VIEW CONTENT CONTAINER */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-2 sm:p-4 lg:p-6 pb-20 md:pb-6 flex flex-col min-w-0">
+      {/* MAIN VIEW CONTENT CONTAINER (With explicit Safe-Area Height calculation) */}
+      <main className="flex-1 max-w-7xl w-full mx-auto p-2 sm:p-4 lg:p-6 pb-20 md:pb-6 flex flex-col min-w-0 h-[calc(100vh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-64px)] overflow-y-auto touch-scrollable">
         
         {/* TAB 1: GPS MAP & RESOURCES DIRECTORY */}
         {activeTab === 'map' && (
@@ -847,52 +886,87 @@ export const App: React.FC = () => {
                 )}
               </div>
 
-              {/* Resources List Column */}
-              <div className={`lg:col-span-5 min-w-0 flex flex-col space-y-2 h-[45vh] sm:h-[50vh] lg:h-[calc(100vh-210px)] min-h-[320px] lg:max-h-[720px] overflow-y-auto pr-1 ${
+              {/* Resources List Column (With explicit Safe-Area Height & Dynamic Scroll Indicator) */}
+              <div className={`lg:col-span-5 min-w-0 flex flex-col relative transition-all ${
                 mapMobileViewMode === 'map' ? 'hidden lg:flex' : 'flex'
               }`}>
-                <div className="flex items-center justify-between pb-1 min-w-0">
-                  <h2 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 truncate">
-                    Community Resources List
-                  </h2>
-                  <span className="text-[11px] text-indigo-700 font-semibold shrink-0">
-                    {filteredResources.length} Results
-                  </span>
+                <div 
+                  ref={resourceListRef}
+                  onScroll={checkScrollPosition}
+                  className="h-[calc(100vh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-64px)] min-h-[320px] overflow-y-auto touch-scrollable pr-1 pb-16 flex flex-col space-y-2.5"
+                >
+                  <div className="flex items-center justify-between pb-1 min-w-0 bg-slate-50/90 backdrop-blur-xs sticky top-0 z-10 py-1 border-b border-slate-100">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <h2 className="text-[10px] font-bold uppercase tracking-wider text-slate-500 truncate">
+                        Community Resources
+                      </h2>
+                      {mapMobileViewMode === 'split' && (
+                        <span className="text-[9px] text-indigo-600 bg-indigo-50 border border-indigo-100 px-1.5 py-0.2 rounded font-medium">
+                          Swipe to scroll list ↓
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[11px] text-indigo-700 font-bold shrink-0">
+                      {filteredResources.length} Found
+                    </span>
+                  </div>
+
+                  {filteredResources.length === 0 ? (
+                    <div className="p-6 rounded-2xl bg-white border border-slate-200 text-center space-y-2">
+                      <MapPin className="w-8 h-8 text-slate-300 mx-auto" />
+                      <h3 className="font-bold text-slate-800 text-sm">No Matching Resources Found</h3>
+                      <p className="text-xs text-slate-500">
+                        Try clearing your search query or removing active category filters.
+                      </p>
+                      <button
+                        onClick={() => {
+                          setSearchQuery('');
+                          setActiveCategory('all');
+                          setFilterPetFriendly(false);
+                          setFilterBedsOnly(false);
+                          setFilterVerifiedOnly(false);
+                          setFilterSavedOnly(false);
+                        }}
+                        className="mt-2 px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-semibold cursor-pointer"
+                      >
+                        Reset Filters
+                      </button>
+                    </div>
+                  ) : (
+                    filteredResources.map((res) => (
+                      <ResourceCard
+                        key={res.id}
+                        resource={res}
+                        onSelect={(r) => setSelectedResource(r)}
+                        isSelected={selectedResource?.id === res.id}
+                        isFavorite={(userProfile.favoriteResourceIds || []).includes(res.id)}
+                        onToggleFavorite={handleToggleFavorite}
+                        onQuickCheckIn={(r) => setQuickCheckInResource(r)}
+                      />
+                    ))
+                  )}
                 </div>
 
-                {filteredResources.length === 0 ? (
-                  <div className="p-6 rounded-2xl bg-white border border-slate-200 text-center space-y-2">
-                    <MapPin className="w-8 h-8 text-slate-300 mx-auto" />
-                    <h3 className="font-bold text-slate-800 text-sm">No Matching Resources Found</h3>
-                    <p className="text-xs text-slate-500">
-                      Try clearing your search query or removing active category filters.
-                    </p>
-                    <button
-                      onClick={() => {
-                        setSearchQuery('');
-                        setActiveCategory('all');
-                        setFilterPetFriendly(false);
-                        setFilterBedsOnly(false);
-                        setFilterVerifiedOnly(false);
-                        setFilterSavedOnly(false);
-                      }}
-                      className="mt-2 px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-semibold"
-                    >
-                      Reset Filters
-                    </button>
-                  </div>
-                ) : (
-                  filteredResources.map((res) => (
-                    <ResourceCard
-                      key={res.id}
-                      resource={res}
-                      onSelect={(r) => setSelectedResource(r)}
-                      isSelected={selectedResource?.id === res.id}
-                      isFavorite={(userProfile.favoriteResourceIds || []).includes(res.id)}
-                      onToggleFavorite={handleToggleFavorite}
-                      onQuickCheckIn={(r) => setQuickCheckInResource(r)}
+                {/* Visual Scroll Indicator & Shadow-Bottom Effect (Appears only when more content exists below the fold) */}
+                {hasMoreBelow && (
+                  <>
+                    <div
+                      aria-hidden="true"
+                      className="pointer-events-none absolute bottom-0 inset-x-0 h-16 bg-gradient-to-t from-slate-300/80 via-slate-100/40 to-transparent z-10 rounded-b-2xl shadow-bottom-fade transition-opacity duration-300"
                     />
-                  ))
+                    <div className="absolute bottom-3 inset-x-0 flex justify-center pointer-events-none z-20 transition-all duration-300">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          resourceListRef.current?.scrollBy({ top: 220, behavior: 'smooth' });
+                        }}
+                        className="pointer-events-auto px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 backdrop-blur-md text-white text-[11px] font-semibold rounded-full shadow-lg border border-indigo-400/40 flex items-center gap-1.5 transition-all transform hover:scale-105 active:scale-95 animate-bounce cursor-pointer"
+                      >
+                        <span>More resources below</span>
+                        <ChevronDown className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </>
                 )}
               </div>
             </div>
@@ -1017,9 +1091,9 @@ export const App: React.FC = () => {
         onClose={() => setShowApkModal(false)}
       />
 
-      {/* FLOATING ACTION PILL: DAISY COMPANION QUICK ACCESS */}
+      {/* FLOATING ACTION PILL: DAISY COMPANION QUICK ACCESS (Safe-Area Inset aware) */}
       {activeTab !== 'advisors' && (
-        <div className="fixed bottom-16 sm:bottom-12 right-3 sm:right-5 z-30">
+        <div className="fixed bottom-[max(calc(env(safe-area-inset-bottom,0px)+64px),72px)] sm:bottom-12 right-3 sm:right-5 z-30">
           <button
             onClick={() => setActiveTab('advisors')}
             className="px-3 py-2 sm:px-3.5 sm:py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl shadow-lg border border-indigo-400/30 flex items-center gap-2 transition transform hover:scale-105"

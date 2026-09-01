@@ -309,9 +309,9 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
           defaultZoom={13}
           mapId="DEMO_MAP_ID"
           internalUsageAttributionIds={["gmp_mcp_codeassist_v1_aistudio"]}
-          gestureHandling="greedy"
+          gestureHandling="cooperative"
           disableDefaultUI={false}
-          className="w-full h-full"
+          className="w-full h-full touch-scrollable"
         >
           <MapController center={currentCenter} zoom={selectedResource ? 15 : 13} />
 
