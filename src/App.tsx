@@ -55,7 +55,9 @@ const LOCAL_STORAGE_PROFILE_KEY = 'daisy_helping_paws_user_profile_v1';
 export const App: React.FC = () => {
   // Navigation Tabs
   const [activeTab, setActiveTab] = useState<'map' | 'workspace' | 'advisors' | 'forms' | 'pets' | 'profile'>('map');
-  const [mapEngine, setMapEngine] = useState<'google' | 'osm'>('google');
+  const [mapEngine, setMapEngine] = useState<'google' | 'osm'>(() => {
+    return Boolean((import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string) || (typeof window !== 'undefined' && localStorage.getItem('daisy_gmaps_key'))) ? 'google' : 'osm';
+  });
   
   // Modals
   const [showCrisisModal, setShowCrisisModal] = useState(false);
@@ -300,8 +302,8 @@ export const App: React.FC = () => {
     <div className="min-h-screen max-w-full overflow-x-hidden bg-[#F8FAFC] text-slate-900 flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
       
       {/* TOP GLOBAL NAVBAR (Mobile-First Compact Header) */}
-      <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-2xs">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2 flex items-center justify-between gap-2">
+      <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-2xs w-full">
+        <div className="max-w-7xl mx-auto px-2.5 sm:px-4 lg:px-6 py-2 flex items-center justify-between gap-2 min-w-0">
           
           {/* Logo & Mascot Brand */}
           <div 
@@ -311,55 +313,55 @@ export const App: React.FC = () => {
             <DaisyMascotBadge size="sm" animate={true} />
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <h1 className="font-heading font-bold text-indigo-700 text-sm sm:text-base md:text-lg tracking-tight truncate">
+                <h1 className="font-heading font-bold text-indigo-700 text-sm sm:text-base tracking-tight truncate">
                   Daisy's Helping Paws
                 </h1>
-                <span className="hidden md:inline-block px-2 py-0.5 rounded-md bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-bold">
-                  24/7 Care Hub
+                <span className="hidden xl:inline-block px-1.5 py-0.5 rounded-md bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-bold">
+                  24/7 Aid
                 </span>
               </div>
-              <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium hidden sm:block truncate">
-                Homeless Resources, Medical, Pet Care & Legal Advocacy
+              <p className="text-[10px] text-slate-500 font-medium hidden sm:block truncate">
+                Homeless Resources, Medical, Pets & Legal Advocacy
               </p>
             </div>
           </div>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+          {/* Desktop Navigation Links (Responsive, Compact) */}
+          <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 shrink min-w-0">
             <button
               onClick={() => setActiveTab('map')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
+              className={`px-2.5 xl:px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 whitespace-nowrap ${
                 activeTab === 'map'
                   ? 'bg-white text-indigo-900 shadow-xs border border-indigo-100'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
-              <MapPin className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Google Maps & Shelters</span>
+              <MapPin className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+              <span>Map & Beds</span>
             </button>
 
             <button
               onClick={() => setActiveTab('workspace')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
+              className={`px-2.5 xl:px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 whitespace-nowrap ${
                 activeTab === 'workspace'
                   ? 'bg-white text-indigo-900 shadow-xs border border-indigo-100'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
-              <HardDrive className="w-3.5 h-3.5 text-rose-600" />
-              <span>Google Workspace Hub</span>
+              <HardDrive className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+              <span>Workspace</span>
             </button>
 
             <button
               onClick={() => setActiveTab('advisors')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
+              className={`px-2.5 xl:px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 whitespace-nowrap ${
                 activeTab === 'advisors'
                   ? 'bg-white text-indigo-900 shadow-xs border border-indigo-100'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
-              <Bot className="w-3.5 h-3.5 text-blue-600" />
-              <span>AI Care Team (6 Experts)</span>
+              <Bot className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+              <span>AI Care Team</span>
             </button>
 
             <button
@@ -367,45 +369,45 @@ export const App: React.FC = () => {
                 setPreselectedFormId(undefined);
                 setActiveTab('forms');
               }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
+              className={`px-2.5 xl:px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 whitespace-nowrap ${
                 activeTab === 'forms'
                   ? 'bg-white text-indigo-900 shadow-xs border border-indigo-100'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
-              <FileText className="w-3.5 h-3.5 text-purple-600" />
-              <span>Benefits & Forms</span>
+              <FileText className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+              <span>Benefits</span>
             </button>
 
             <button
               onClick={() => setActiveTab('pets')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
+              className={`px-2.5 xl:px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 whitespace-nowrap ${
                 activeTab === 'pets'
                   ? 'bg-white text-indigo-900 shadow-xs border border-indigo-100'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
-              <Dog className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Pet Care & ESA Rights</span>
+              <Dog className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              <span>Pet Care</span>
             </button>
 
             <button
               onClick={() => setActiveTab('profile')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
+              className={`px-2.5 xl:px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 whitespace-nowrap ${
                 activeTab === 'profile'
                   ? 'bg-white text-indigo-900 shadow-xs border border-indigo-100'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
-              <User className="w-3.5 h-3.5 text-amber-600" />
-              <span>My Vault & Docs</span>
+              <User className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+              <span>My Vault</span>
             </button>
           </nav>
 
           {/* Header Action Buttons & Emergency Pill */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {/* Quick specialist avatar cluster on large screens */}
-            <div className="hidden xl:flex -space-x-1.5 items-center">
+            {/* Quick specialist avatar cluster on extra large screens */}
+            <div className="hidden 2xl:flex -space-x-1.5 items-center">
               <div className="w-7 h-7 rounded-full bg-blue-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-blue-600" title="Dr. Morgan (Medical MD)">DR</div>
               <div className="w-7 h-7 rounded-full bg-green-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-green-600" title="Dr. Bailey (Daisy Vet)">VT</div>
               <div className="w-7 h-7 rounded-full bg-purple-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-purple-600" title="Jordan Vance (Legal Defense)">LW</div>
@@ -414,20 +416,20 @@ export const App: React.FC = () => {
 
             <button
               onClick={() => setShowApkModal(true)}
-              className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold hidden md:flex items-center gap-1.5 transition shadow-2xs"
+              className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold hidden xl:flex items-center gap-1.5 transition shadow-2xs"
               title="Android APK download & autonomous phone calling/texting"
             >
-              <Smartphone className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Android APK</span>
+              <Smartphone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              <span>APK</span>
             </button>
 
             <button
               onClick={() => setShowGroundingModal(true)}
-              className="px-2.5 py-1 rounded-lg bg-pink-50 hover:bg-pink-100 text-pink-700 border border-pink-200 text-xs font-semibold hidden sm:flex items-center gap-1.5 transition"
+              className="px-2.5 py-1 rounded-lg bg-pink-50 hover:bg-pink-100 text-pink-700 border border-pink-200 text-xs font-semibold hidden lg:flex items-center gap-1.5 transition"
               title="Calm panic or acute anxiety"
             >
-              <Heart className="w-3.5 h-3.5 text-pink-600 fill-pink-600" />
-              <span>Calm (5-4-3-2-1)</span>
+              <Heart className="w-3.5 h-3.5 text-pink-600 fill-pink-600 shrink-0" />
+              <span>Calm</span>
             </button>
 
             {/* Emergency Help Button */}
@@ -436,14 +438,14 @@ export const App: React.FC = () => {
               className="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[11px] sm:text-xs font-bold shadow-xs flex items-center gap-1 transition shrink-0"
               title="Emergency Help & Crisis Lines"
             >
-              <AlertCircle className="w-3.5 h-3.5" />
+              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
               <span>Emergency</span>
             </button>
 
             {/* Mobile quick more menu button */}
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="lg:hidden p-1.5 rounded-lg text-slate-700 hover:bg-slate-100 transition"
+              className="lg:hidden p-1.5 rounded-lg text-slate-700 hover:bg-slate-100 transition shrink-0"
               aria-label="Open menu"
             >
               <Menu className="w-5 h-5" />
@@ -604,7 +606,7 @@ export const App: React.FC = () => {
             
             {/* Search & Mobile View Switcher Bar (Responsive CSS Grid) */}
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-3 bg-white p-2.5 sm:p-3 rounded-xl border border-slate-200 shadow-xs w-full min-w-0 items-center">
-              <div className="sm:col-span-7 lg:col-span-7 relative w-full min-w-0">
+              <div className="sm:col-span-6 lg:col-span-5 relative w-full min-w-0">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
@@ -623,14 +625,40 @@ export const App: React.FC = () => {
                 )}
               </div>
 
+              {/* Map Engine Selector (Google vs OpenStreetMap) */}
+              <div className="sm:col-span-6 lg:col-span-3 flex items-center justify-start sm:justify-center gap-1.5 min-w-0">
+                <div className="inline-flex bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs font-semibold shrink-0">
+                  <button
+                    onClick={() => setMapEngine('google')}
+                    className={`px-2 py-1 rounded-md transition text-xs ${
+                      mapEngine === 'google'
+                        ? 'bg-indigo-600 text-white shadow-2xs font-bold'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Google Maps
+                  </button>
+                  <button
+                    onClick={() => setMapEngine('osm')}
+                    className={`px-2 py-1 rounded-md transition text-xs ${
+                      mapEngine === 'osm'
+                        ? 'bg-slate-900 text-white shadow-2xs font-bold'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    OpenStreetMap
+                  </button>
+                </div>
+              </div>
+
               {/* Mobile Map / List / Split Segmented Control */}
-              <div className="sm:col-span-5 lg:hidden flex w-full items-center justify-between gap-1.5 min-w-0">
+              <div className="lg:hidden sm:col-span-12 flex w-full items-center justify-between gap-1.5 min-w-0">
                 <div className="grid grid-cols-3 bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs font-semibold flex-1 min-w-0">
                   <button
                     onClick={() => setMapMobileViewMode('map')}
                     className={`px-1.5 py-1 rounded-md transition text-center truncate ${
                       mapMobileViewMode === 'map'
-                        ? 'bg-white text-indigo-900 shadow-2xs'
+                        ? 'bg-white text-indigo-900 shadow-2xs font-bold'
                         : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
@@ -640,7 +668,7 @@ export const App: React.FC = () => {
                     onClick={() => setMapMobileViewMode('split')}
                     className={`px-1.5 py-1 rounded-md transition text-center truncate ${
                       mapMobileViewMode === 'split'
-                        ? 'bg-white text-indigo-900 shadow-2xs'
+                        ? 'bg-white text-indigo-900 shadow-2xs font-bold'
                         : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
@@ -650,7 +678,7 @@ export const App: React.FC = () => {
                     onClick={() => setMapMobileViewMode('list')}
                     className={`px-1.5 py-1 rounded-md transition text-center truncate ${
                       mapMobileViewMode === 'list'
-                        ? 'bg-white text-indigo-900 shadow-2xs'
+                        ? 'bg-white text-indigo-900 shadow-2xs font-bold'
                         : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
@@ -668,7 +696,7 @@ export const App: React.FC = () => {
               </div>
 
               {/* Desktop Showing Count & Report Button */}
-              <div className="hidden lg:flex lg:col-span-5 items-center justify-end gap-3 min-w-0">
+              <div className="hidden lg:flex lg:col-span-4 items-center justify-end gap-2.5 min-w-0">
                 <span className="text-xs text-slate-500 font-medium whitespace-nowrap">
                   Showing <span className="font-bold text-slate-800">{filteredResources.length}</span> resources
                 </span>
@@ -688,34 +716,12 @@ export const App: React.FC = () => {
               
               {/* Interactive Map Column with Engine Selector */}
               <div className={`lg:col-span-7 min-w-0 relative rounded-2xl overflow-hidden border border-slate-200 shadow-xs bg-slate-100 transition-all flex flex-col ${
-                mapMobileViewMode === 'list' ? 'hidden lg:block' : ''
+                mapMobileViewMode === 'list' ? 'hidden lg:flex' : 'flex'
               } ${
-                mapMobileViewMode === 'map' ? 'h-[72vh] lg:h-[620px]' : 'h-[280px] sm:h-[380px] lg:h-[620px]'
+                mapMobileViewMode === 'map'
+                  ? 'h-[62vh] sm:h-[68vh] lg:h-[calc(100vh-210px)] min-h-[360px] lg:max-h-[720px]'
+                  : 'h-[300px] sm:h-[380px] lg:h-[calc(100vh-210px)] min-h-[320px] lg:max-h-[720px]'
               }`}>
-                
-                {/* Engine Selector Pill */}
-                <div className="absolute top-3 right-3 z-20 flex items-center bg-white/95 backdrop-blur-xs p-1 rounded-xl border border-slate-200 shadow-xs text-[10px] font-bold">
-                  <button
-                    onClick={() => setMapEngine('google')}
-                    className={`px-2 py-1 rounded-lg transition ${
-                      mapEngine === 'google'
-                        ? 'bg-indigo-600 text-white shadow-2xs'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    Google Maps
-                  </button>
-                  <button
-                    onClick={() => setMapEngine('osm')}
-                    className={`px-2 py-1 rounded-lg transition ${
-                      mapEngine === 'osm'
-                        ? 'bg-slate-900 text-white shadow-2xs'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    OpenStreet
-                  </button>
-                </div>
 
                 {mapEngine === 'google' ? (
                   <GoogleMapView
@@ -733,6 +739,7 @@ export const App: React.FC = () => {
                     onToggleBedsOnly={() => setFilterBedsOnly(!filterBedsOnly)}
                     filterVerifiedOnly={filterVerifiedOnly}
                     onToggleVerifiedOnly={() => setFilterVerifiedOnly(!filterVerifiedOnly)}
+                    onSwitchToOsm={() => setMapEngine('osm')}
                   />
                 ) : (
                   <MapView
@@ -755,7 +762,7 @@ export const App: React.FC = () => {
               </div>
 
               {/* Resources List Column */}
-              <div className={`lg:col-span-5 min-w-0 flex flex-col space-y-2 max-h-[60vh] lg:max-h-[620px] overflow-y-auto pr-1 ${
+              <div className={`lg:col-span-5 min-w-0 flex flex-col space-y-2 h-[45vh] sm:h-[50vh] lg:h-[calc(100vh-210px)] min-h-[320px] lg:max-h-[720px] overflow-y-auto pr-1 ${
                 mapMobileViewMode === 'map' ? 'hidden lg:flex' : 'flex'
               }`}>
                 <div className="flex items-center justify-between pb-1 min-w-0">
@@ -913,26 +920,36 @@ export const App: React.FC = () => {
         </div>
       )}
 
-      {/* MOBILE PERSISTENT BOTTOM NAVIGATION BAR (Responsive 5-Column Grid) */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 w-full z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-1 py-1 grid grid-cols-5 gap-0.5 shadow-lg safe-bottom-padding">
+      {/* MOBILE PERSISTENT BOTTOM NAVIGATION BAR (Responsive 6-Column Grid) */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 w-full z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-0.5 sm:px-1 py-1 grid grid-cols-6 gap-0.5 shadow-lg safe-bottom-padding">
         <button
           onClick={() => setActiveTab('map')}
-          className={`flex flex-col items-center justify-center py-1 px-1 rounded-lg transition min-w-0 ${
-            activeTab === 'map' ? 'text-indigo-600 font-bold' : 'text-slate-500 hover:text-slate-800'
+          className={`flex flex-col items-center justify-center py-1 px-0.5 rounded-lg transition min-w-0 ${
+            activeTab === 'map' ? 'text-indigo-600 font-bold bg-indigo-50/50' : 'text-slate-500 hover:text-slate-800'
           }`}
         >
-          <MapPin className="w-4 h-4 shrink-0" />
-          <span className="text-[10px] mt-0.5 truncate max-w-full">Map & Beds</span>
+          <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+          <span className="text-[9px] sm:text-[10px] mt-0.5 truncate max-w-full">Map</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('workspace')}
+          className={`flex flex-col items-center justify-center py-1 px-0.5 rounded-lg transition min-w-0 ${
+            activeTab === 'workspace' ? 'text-rose-600 font-bold bg-rose-50/50' : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <HardDrive className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+          <span className="text-[9px] sm:text-[10px] mt-0.5 truncate max-w-full">Workspace</span>
         </button>
 
         <button
           onClick={() => setActiveTab('advisors')}
-          className={`flex flex-col items-center justify-center py-1 px-1 rounded-lg transition min-w-0 ${
-            activeTab === 'advisors' ? 'text-indigo-600 font-bold' : 'text-slate-500 hover:text-slate-800'
+          className={`flex flex-col items-center justify-center py-1 px-0.5 rounded-lg transition min-w-0 ${
+            activeTab === 'advisors' ? 'text-blue-600 font-bold bg-blue-50/50' : 'text-slate-500 hover:text-slate-800'
           }`}
         >
-          <Bot className="w-4 h-4 shrink-0" />
-          <span className="text-[10px] mt-0.5 truncate max-w-full">Care Team</span>
+          <Bot className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+          <span className="text-[9px] sm:text-[10px] mt-0.5 truncate max-w-full">Care Team</span>
         </button>
 
         <button
@@ -940,32 +957,32 @@ export const App: React.FC = () => {
             setPreselectedFormId(undefined);
             setActiveTab('forms');
           }}
-          className={`flex flex-col items-center justify-center py-1 px-1 rounded-lg transition min-w-0 ${
-            activeTab === 'forms' ? 'text-indigo-600 font-bold' : 'text-slate-500 hover:text-slate-800'
+          className={`flex flex-col items-center justify-center py-1 px-0.5 rounded-lg transition min-w-0 ${
+            activeTab === 'forms' ? 'text-purple-600 font-bold bg-purple-50/50' : 'text-slate-500 hover:text-slate-800'
           }`}
         >
-          <FileText className="w-4 h-4 shrink-0" />
-          <span className="text-[10px] mt-0.5 truncate max-w-full">Benefits</span>
+          <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+          <span className="text-[9px] sm:text-[10px] mt-0.5 truncate max-w-full">Benefits</span>
         </button>
 
         <button
           onClick={() => setActiveTab('pets')}
-          className={`flex flex-col items-center justify-center py-1 px-1 rounded-lg transition min-w-0 ${
-            activeTab === 'pets' ? 'text-indigo-600 font-bold' : 'text-slate-500 hover:text-slate-800'
+          className={`flex flex-col items-center justify-center py-1 px-0.5 rounded-lg transition min-w-0 ${
+            activeTab === 'pets' ? 'text-emerald-600 font-bold bg-emerald-50/50' : 'text-slate-500 hover:text-slate-800'
           }`}
         >
-          <Dog className="w-4 h-4 shrink-0" />
-          <span className="text-[10px] mt-0.5 truncate max-w-full">Pet Care</span>
+          <Dog className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+          <span className="text-[9px] sm:text-[10px] mt-0.5 truncate max-w-full">Pets</span>
         </button>
 
         <button
           onClick={() => setActiveTab('profile')}
-          className={`flex flex-col items-center justify-center py-1 px-1 rounded-lg transition min-w-0 ${
-            activeTab === 'profile' ? 'text-indigo-600 font-bold' : 'text-slate-500 hover:text-slate-800'
+          className={`flex flex-col items-center justify-center py-1 px-0.5 rounded-lg transition min-w-0 ${
+            activeTab === 'profile' ? 'text-amber-600 font-bold bg-amber-50/50' : 'text-slate-500 hover:text-slate-800'
           }`}
         >
-          <User className="w-4 h-4 shrink-0" />
-          <span className="text-[10px] mt-0.5 truncate max-w-full">Vault</span>
+          <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+          <span className="text-[9px] sm:text-[10px] mt-0.5 truncate max-w-full">Vault</span>
         </button>
       </nav>
 

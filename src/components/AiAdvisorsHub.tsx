@@ -418,10 +418,10 @@ export const AiAdvisorsHub: React.FC<AiAdvisorsHubProps> = ({
   };
 
   return (
-    <div className="w-full max-w-full min-w-0 grid grid-cols-1 lg:grid-cols-12 bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden min-h-[520px] lg:min-h-[660px] relative">
+    <div className="w-full max-w-full min-w-0 grid grid-cols-1 lg:grid-cols-12 bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden h-auto lg:h-[calc(100vh-175px)] lg:min-h-[580px] lg:max-h-[820px] relative">
       
       {/* Specialists Selector (Responsive Grid on Mobile/Tablet, Vertical Sidebar on Desktop) */}
-      <div className="lg:col-span-4 xl:col-span-3 min-w-0 border-b lg:border-b-0 lg:border-r border-slate-200 bg-slate-50/70 p-2.5 sm:p-3 flex flex-col justify-between">
+      <div className="lg:col-span-4 xl:col-span-3 min-w-0 border-b lg:border-b-0 lg:border-r border-slate-200 bg-slate-50/70 p-2.5 sm:p-3 flex flex-col justify-between overflow-y-auto max-h-[260px] lg:max-h-full">
         <div className="w-full min-w-0">
           {/* Top Brand Greeting */}
           <div className="flex items-center gap-2 mb-2 sm:mb-2.5 p-1">
