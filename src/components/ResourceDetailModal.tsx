@@ -16,7 +16,14 @@ import {
   Activity, 
   CheckCircle2, 
   Sparkles,
-  AlertCircle
+  AlertCircle,
+  Heart,
+  Volume2,
+  VolumeX,
+  Copy,
+  Share2,
+  Bot,
+  Footprints
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -26,6 +33,9 @@ interface ResourceDetailModalProps {
   onPostReview: (resourceId: string, review: Partial<Review>) => void;
   onPostCheckIn: (resourceId: string, checkIn: Partial<CheckIn>) => void;
   onVerifyResource?: (resourceId: string, action: 'confirm' | 'flag', reason?: string) => void;
+  isFavorite?: boolean;
+  onToggleFavorite?: (resourceId: string) => void;
+  onAskAdvisor?: (resource: Resource) => void;
 }
 
 export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
@@ -34,6 +44,9 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
   onPostReview,
   onPostCheckIn,
   onVerifyResource,
+  isFavorite = false,
+  onToggleFavorite,
+  onAskAdvisor,
 }) => {
   const [activeTab, setActiveTab] = useState<'details' | 'reviews' | 'checkin' | 'verification'>('details');
   
@@ -59,6 +72,10 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
   const [lineLength, setLineLength] = useState<'none' | 'short' | 'moderate' | 'long'>('short');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // TTS Voice state
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [copied, setCopied] = useState(false);
+
   useEffect(() => {
     if (resource) {
       setIsLoadingReviews(true);
@@ -72,7 +89,44 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
     }
   }, [resource]);
 
+  useEffect(() => {
+    return () => {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
   if (!resource) return null;
+
+  const handleToggleSpeech = () => {
+    if (!('speechSynthesis' in window)) {
+      alert('Text-to-speech is not supported on this browser.');
+      return;
+    }
+
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    } else {
+      window.speechSynthesis.cancel();
+      const textToRead = `${resource.name}. Located at ${resource.address}, ${resource.city}. ${resource.description}. Operating hours: ${resource.hours}. ${resource.petFriendly ? 'Pet friendly facility.' : 'Service animals only.'}`;
+      const utterance = new SpeechSynthesisUtterance(textToRead);
+      utterance.rate = 1.0;
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => setIsSpeaking(false);
+      window.speechSynthesis.speak(utterance);
+      setIsSpeaking(true);
+    }
+  };
+
+  const handleCopyDetails = () => {
+    const summary = `${resource.name}\nAddress: ${resource.address}, ${resource.city}, ${resource.state} ${resource.zip}\nPhone: ${resource.phone || 'N/A'}\nHours: ${resource.hours}\nWebsite: ${resource.website || 'N/A'}\nPet Policy: ${resource.petFriendly ? 'Pet Friendly' : 'Service Animals Only'}\nOverview: ${resource.description}`;
+    navigator.clipboard.writeText(summary);
+    setCopied(true);
+    confetti({ particleCount: 30, spread: 40 });
+    setTimeout(() => setCopied(false), 2500);
+  };
 
   const handleConfirmVerification = () => {
     if (onVerifyResource) {
@@ -148,19 +202,23 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
     setActiveTab('details');
   };
 
+  const walkingMinutes = resource.distanceMiles 
+    ? Math.max(1, Math.round(resource.distanceMiles * 20))
+    : null;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs animate-fade-in">
       <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-xl border border-slate-200 overflow-hidden">
         
         {/* Modal Header */}
         <div className="p-4 bg-slate-900 text-white flex items-start justify-between">
-          <div className="flex items-start gap-2.5">
+          <div className="flex items-start gap-2.5 min-w-0 flex-1">
             <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center text-xl shrink-0">
               {resource.category === 'shelter' ? '🛏️' : resource.category === 'food' ? '🍱' : resource.category === 'vet' ? '🐾' : resource.category === 'medical' ? '🩺' : resource.category === 'legal' ? '⚖️' : '📍'}
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <h2 className="text-base font-bold font-heading">{resource.name}</h2>
+                <h2 className="text-base font-bold font-heading truncate">{resource.name}</h2>
                 {resource.verified && (
                   <span className="px-1.5 py-0.2 rounded-md bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] font-bold flex items-center gap-1">
                     <ShieldCheck className="w-3 h-3" /> Verified
@@ -172,19 +230,48 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-slate-300 mt-0.5 flex items-center gap-1.5">
+              <p className="text-[11px] text-slate-300 mt-0.5 flex items-center gap-1.5 truncate">
                 <MapPin className="w-3 h-3 text-indigo-400 shrink-0" />
-                <span>{resource.address}, {resource.city}, {resource.state} {resource.zip}</span>
+                <span className="truncate">{resource.address}, {resource.city}, {resource.state} {resource.zip}</span>
               </p>
             </div>
           </div>
 
-          <button
-            onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-1.5 shrink-0 ml-2">
+            {onToggleFavorite && (
+              <button
+                type="button"
+                onClick={() => onToggleFavorite(resource.id)}
+                className={`p-2 rounded-xl transition ${
+                  isFavorite 
+                    ? 'bg-rose-500/20 text-rose-400 hover:bg-rose-500/30' 
+                    : 'text-slate-400 hover:text-rose-400 hover:bg-slate-800'
+                }`}
+                title={isFavorite ? 'Remove from Saved' : 'Save to My Vault'}
+              >
+                <Heart className={`w-4 h-4 ${isFavorite ? 'fill-rose-400' : ''}`} />
+              </button>
+            )}
+
+            <button
+              onClick={handleToggleSpeech}
+              className={`p-2 rounded-xl transition ${
+                isSpeaking 
+                  ? 'bg-amber-400 text-slate-950 animate-pulse' 
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
+              title={isSpeaking ? 'Stop reading' : 'Read Aloud (Voice Accessibility)'}
+            >
+              {isSpeaking ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            </button>
+
+            <button
+              onClick={onClose}
+              className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Quick Action Navigation Bar (Responsive Grid / Auto-wrapping) */}
@@ -221,6 +308,15 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
                 <span>Website</span>
               </a>
             )}
+
+            <button
+              onClick={handleCopyDetails}
+              className="px-2 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium flex items-center gap-1 transition shrink-0"
+              title="Copy details to clipboard"
+            >
+              {copied ? <CheckCircle2 className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3 text-slate-500" />}
+              <span>{copied ? 'Copied' : 'Share'}</span>
+            </button>
           </div>
 
           <div className="grid grid-cols-4 gap-1 bg-slate-200/70 p-0.5 rounded-lg w-full min-w-0">
@@ -265,6 +361,24 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
           {/* TAB 1: DETAILS */}
           {activeTab === 'details' && (
             <>
+              {/* Distance and Walking Time Badge */}
+              {walkingMinutes !== null && (
+                <div className="p-2.5 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2 text-slate-800 font-semibold">
+                    <Footprints className="w-4 h-4 text-indigo-600" />
+                    <span>Estimated Transit: ~{walkingMinutes} min walk ({resource.distanceMiles} miles away)</span>
+                  </div>
+                  <a
+                    href={`https://www.google.com/maps/dir/?api=1&destination=${resource.lat},${resource.lng}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-indigo-600 font-bold hover:underline"
+                  >
+                    Open GPS Route &rarr;
+                  </a>
+                </div>
+              )}
+
               {/* Bed Counter Banner if available */}
               {resource.bedsAvailable !== undefined && (
                 <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-between">
@@ -338,6 +452,30 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
                   </p>
                 </div>
               </div>
+
+              {/* Ask AI Specialist Action */}
+              {onAskAdvisor && (
+                <div className="p-3.5 rounded-xl bg-gradient-to-r from-indigo-900 to-slate-900 text-white flex items-center justify-between gap-3 shadow-xs">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center font-bold">
+                      <Bot className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold font-heading">Need help with this location?</h4>
+                      <p className="text-[11px] text-indigo-200">Ask our AI Caseworker to draft an intake script or verify bed rules.</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      onAskAdvisor(resource);
+                      onClose();
+                    }}
+                    className="px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl shadow-xs transition shrink-0"
+                  >
+                    Ask Advisor
+                  </button>
+                </div>
+              )}
             </>
           )}
 
@@ -498,171 +636,118 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
               )}
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-700 mb-0.5">Current Wait Line</label>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {(['none', 'short', 'moderate', 'long'] as const).map((lvl) => (
-                    <button
-                      key={lvl}
-                      type="button"
-                      onClick={() => setLineLength(lvl)}
-                      className={`py-1.5 rounded-lg text-xs font-semibold capitalize transition border ${
-                        lineLength === lvl
-                          ? 'bg-indigo-600 text-white border-indigo-700 shadow-xs'
-                          : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                      }`}
-                    >
-                      {lvl}
-                    </button>
-                  ))}
-                </div>
+                <label className="block text-[11px] font-semibold text-slate-700 mb-0.5">Line Length</label>
+                <select
+                  value={lineLength}
+                  onChange={(e) => setLineLength(e.target.value as any)}
+                  className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 outline-none font-medium"
+                >
+                  <option value="none">No line (Walk right in)</option>
+                  <option value="short">Short (5-10 minutes)</option>
+                  <option value="moderate">Moderate (15-30 minutes)</option>
+                  <option value="long">Long (30+ minutes)</option>
+                </select>
               </div>
 
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-lg shadow-xs transition"
+                className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-lg shadow-xs transition"
               >
-                Submit Live Check-In
+                Post Live Check-In
               </button>
             </form>
           )}
 
-          {/* TAB 4: VERIFICATION & ACCURACY */}
+          {/* TAB 4: VERIFICATION */}
           {activeTab === 'verification' && (
             <div className="space-y-4">
-              {/* Verification Tier Banner */}
-              <div className={`p-4 rounded-xl border flex items-start justify-between gap-3 ${
-                resource.verificationTier === 'verified' || resource.verified
-                  ? 'bg-emerald-50 border-emerald-200 text-emerald-950'
-                  : resource.verificationTier === 'community_verified'
-                  ? 'bg-blue-50 border-blue-200 text-blue-950'
-                  : resource.verificationTier === 'flagged_inaccurate'
-                  ? 'bg-rose-50 border-rose-200 text-rose-950'
-                  : 'bg-amber-50 border-amber-200 text-amber-950'
-              }`}>
-                <div className="flex items-start gap-3">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0 font-bold ${
-                    resource.verificationTier === 'verified' || resource.verified
-                      ? 'bg-emerald-600'
-                      : resource.verificationTier === 'community_verified'
-                      ? 'bg-blue-600'
-                      : resource.verificationTier === 'flagged_inaccurate'
-                      ? 'bg-rose-600'
-                      : 'bg-amber-600'
-                  }`}>
-                    <ShieldCheck className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-sm">
-                      {resource.verificationTier === 'verified' || resource.verified
-                        ? 'Official Agency Verified'
-                        : resource.verificationTier === 'community_verified'
-                        ? 'Community Verified Resource'
-                        : resource.verificationTier === 'flagged_inaccurate'
-                        ? 'Flagged for Review / Inaccuracy'
-                        : 'Crowd-Sourced (Pending Full Validation)'}
-                    </h4>
-                    <p className="text-xs opacity-90 mt-0.5 leading-relaxed">
-                      {resource.verificationTier === 'verified' || resource.verified
-                        ? 'This location and its services have been audited and officially confirmed by verified municipal agency caseworkers.'
-                        : resource.verificationTier === 'community_verified'
-                        ? `Confirmed active and open by ${resource.upvotesCount || 3}+ local community members and unhoused peers.`
-                        : resource.verificationTier === 'flagged_inaccurate'
-                        ? 'Multiple community members noted discrepancies in hours, phone numbers, or intake rules.'
-                        : 'Submitted by a community member. Help keep our directory accurate by verifying or flagging details below.'}
-                    </p>
-                  </div>
-                </div>
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                <h4 className="text-xs font-bold text-slate-900 mb-1 flex items-center gap-1.5 font-heading">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <span>Community Accuracy Verification</span>
+                </h4>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Help keep this resource accurate. Have you visited recently? Confirm that the hours, services, and pet rules are correct, or report changes.
+                </p>
 
-                <div className="text-right shrink-0 bg-white/80 backdrop-blur-xs p-2 rounded-lg border border-slate-200">
-                  <div className="text-xs font-bold text-slate-700">Community Trust</div>
-                  <div className="text-sm font-black text-emerald-700">
-                    👍 {resource.upvotesCount || (resource.verified ? 12 : 1)} / 👎 {resource.downvotesCount || 0}
+                {hasVoted ? (
+                  <div className="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-900 text-xs font-medium flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>Thank you! Your verification feedback has been logged to the community network.</span>
                   </div>
-                </div>
+                ) : (
+                  <div className="mt-3 flex flex-col sm:flex-row gap-2">
+                    <button
+                      onClick={handleConfirmVerification}
+                      className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-1.5"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Confirm Info is Accurate</span>
+                    </button>
+                  </div>
+                )}
               </div>
 
-              {/* Action Buttons */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  disabled={hasVoted}
-                  onClick={handleConfirmVerification}
-                  className={`p-3.5 rounded-xl border flex flex-col items-center text-center gap-1.5 transition ${
-                    hasVoted
-                      ? 'bg-emerald-100 border-emerald-300 text-emerald-800 opacity-80 cursor-default'
-                      : 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-700 shadow-xs'
-                  }`}
-                >
-                  <span className="text-base">👍</span>
-                  <span className="font-bold text-xs">{hasVoted ? 'Thank You for Confirming!' : 'Confirm This Resource is Open & Accurate'}</span>
-                  <span className="text-[10px] opacity-80">Adds +1 to community trust score</span>
-                </button>
+              {/* Report Issue Form */}
+              {!hasVoted && (
+                <form onSubmit={handleFlagVerification} className="p-3.5 rounded-xl bg-rose-50/60 border border-rose-200 space-y-2.5">
+                  <h4 className="text-xs font-bold text-rose-950 flex items-center gap-1.5">
+                    <AlertCircle className="w-4 h-4 text-rose-600" />
+                    <span>Report Outdated or Incorrect Info</span>
+                  </h4>
 
-                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-                  <h5 className="font-bold text-xs text-slate-800 flex items-center gap-1">
-                    <AlertCircle className="w-3.5 h-3.5 text-rose-500" />
-                    <span>Report an Issue or Inaccuracy</span>
-                  </h5>
-                  <form onSubmit={handleFlagVerification} className="space-y-1.5">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-0.5">What changed?</label>
                     <select
                       value={flagReason}
                       onChange={(e) => setFlagReason(e.target.value)}
-                      className="w-full px-2 py-1 bg-white border border-slate-200 rounded-md text-[11px] outline-none"
+                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-rose-500 outline-none font-medium"
                     >
-                      <option value="Operating hours or schedule has changed">Hours or schedule changed</option>
-                      <option value="Location has moved or permanently closed">Location closed / moved</option>
-                      <option value="Phone number is disconnected or wrong">Phone disconnected</option>
-                      <option value="Intake criteria or ID requirements changed">Intake / ID rules changed</option>
-                      <option value="Pet policy is no longer allowed">Pet policy no longer pet-friendly</option>
+                      <option value="Operating hours or schedule has changed">Operating hours or schedule has changed</option>
+                      <option value="Facility closed or relocated">Facility closed or relocated</option>
+                      <option value="No longer pet-friendly">No longer pet-friendly</option>
+                      <option value="Beds or services no longer available">Beds or services no longer available</option>
+                      <option value="Phone number or contact changed">Phone number or contact changed</option>
+                      <option value="Other discrepancy">Other discrepancy</option>
                     </select>
+                  </div>
 
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-0.5">Details (Optional)</label>
                     <input
                       type="text"
                       value={customReason}
                       onChange={(e) => setCustomReason(e.target.value)}
-                      placeholder="Optional details (e.g. now closes at 4 PM)"
-                      className="w-full px-2 py-1 bg-white border border-slate-200 rounded-md text-[11px] outline-none"
+                      placeholder="e.g., Now open at 6 PM instead of 5 PM"
+                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-rose-500 outline-none"
                     />
+                  </div>
 
-                    <button
-                      type="submit"
-                      disabled={hasVoted}
-                      className="w-full py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-md text-[11px] font-semibold transition"
-                    >
-                      Submit Accuracy Report
-                    </button>
-                  </form>
-                </div>
-              </div>
-
-              {/* Audit & Verification History Logs */}
-              <div>
-                <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Audit & Community History</h4>
-                <div className="space-y-1.5">
-                  {resource.verificationLogs && resource.verificationLogs.length > 0 ? (
-                    resource.verificationLogs.map((log) => (
-                      <div key={log.id} className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 flex items-start justify-between gap-2 text-xs">
-                        <div className="flex items-start gap-2">
-                          <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
-                            log.action === 'confirmed' ? 'bg-emerald-500' : 'bg-rose-500'
-                          }`} />
-                          <div>
-                            <span className="font-semibold text-slate-900">{log.authorName}</span>
-                            <p className="text-[11px] text-slate-600">{log.reason}</p>
-                          </div>
-                        </div>
-                        <span className="text-[10px] text-slate-400 shrink-0">{log.timestamp}</span>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-xs text-slate-500 italic p-2 bg-slate-50 rounded-lg">No audit entries logged yet.</p>
-                  )}
-                </div>
-              </div>
+                  <button
+                    type="submit"
+                    className="w-full py-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs rounded-lg shadow-xs transition"
+                  >
+                    Submit Issue Report
+                  </button>
+                </form>
+              )}
             </div>
           )}
+
         </div>
+
+        {/* Footer */}
+        <div className="p-3 bg-slate-100 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+          <span>Need crisis assistance? Dial 988 anytime.</span>
+          <button
+            onClick={onClose}
+            className="px-4 py-1.5 bg-slate-800 text-white rounded-lg font-semibold hover:bg-slate-700 transition"
+          >
+            Close
+          </button>
+        </div>
+
       </div>
     </div>
   );

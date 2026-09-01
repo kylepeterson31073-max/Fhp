@@ -23,6 +23,9 @@ import { EmergencyCrisisModal } from './components/EmergencyCrisisModal';
 import { GroundingExerciseModal } from './components/GroundingExerciseModal';
 import { AndroidApkModal } from './components/AndroidApkModal';
 import { DaisyMascotBadge } from './components/DaisyMascotBadge';
+import { SevereWeatherAlertBanner } from './components/SevereWeatherAlertBanner';
+import { PocketResourceDirectoryModal } from './components/PocketResourceDirectoryModal';
+import { QuickCheckInModal } from './components/QuickCheckInModal';
 import { 
   MapPin, 
   Bot, 
@@ -47,10 +50,26 @@ import {
   Calendar as CalendarIcon,
   CheckSquare,
   MessageSquare,
-  Users
+  Users,
+  Printer,
+  Compass,
+  Bookmark
 } from 'lucide-react';
+import confetti from 'canvas-confetti';
 
 const LOCAL_STORAGE_PROFILE_KEY = 'daisy_helping_paws_user_profile_v1';
+
+function calculateDistanceInMiles(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 3958.8; // Earth's radius in miles
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c * 10) / 10;
+}
 
 export const App: React.FC = () => {
   // Navigation Tabs
@@ -64,6 +83,8 @@ export const App: React.FC = () => {
   const [showGroundingModal, setShowGroundingModal] = useState(false);
   const [showAddResourceModal, setShowAddResourceModal] = useState(false);
   const [showApkModal, setShowApkModal] = useState(false);
+  const [showPocketDirectoryModal, setShowPocketDirectoryModal] = useState(false);
+  const [quickCheckInResource, setQuickCheckInResource] = useState<Resource | null>(null);
   const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
   const [preselectedFormId, setPreselectedFormId] = useState<string | undefined>(undefined);
 
@@ -74,6 +95,7 @@ export const App: React.FC = () => {
   const [filterPetFriendly, setFilterPetFriendly] = useState(false);
   const [filterBedsOnly, setFilterBedsOnly] = useState(false);
   const [filterVerifiedOnly, setFilterVerifiedOnly] = useState(false);
+  const [filterSavedOnly, setFilterSavedOnly] = useState(false);
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mapMobileViewMode, setMapMobileViewMode] = useState<'split' | 'map' | 'list'>('split');
@@ -111,6 +133,7 @@ export const App: React.FC = () => {
         }
       ],
       savedDocuments: [],
+      favoriteResourceIds: ['res-1', 'res-4'],
     };
   });
 
@@ -162,6 +185,20 @@ export const App: React.FC = () => {
     setUserProfile((prev) => ({ ...prev, ...updates }));
   };
 
+  const handleToggleFavorite = (resourceId: string) => {
+    const currentFavorites = userProfile.favoriteResourceIds || [];
+    const exists = currentFavorites.includes(resourceId);
+    const updated = exists 
+      ? currentFavorites.filter((id) => id !== resourceId)
+      : [...currentFavorites, resourceId];
+
+    if (!exists) {
+      confetti({ particleCount: 35, spread: 45, origin: { y: 0.8 } });
+    }
+
+    handleUpdateProfile({ favoriteResourceIds: updated });
+  };
+
   const handleSaveDocument = (doc: SavedDocument) => {
     setUserProfile((prev) => ({
       ...prev,
@@ -183,12 +220,19 @@ export const App: React.FC = () => {
     }));
   };
 
-  // Filter resources based on search and active filters
-  const filteredResources = resources.filter((res) => {
+  // Filter resources based on search and active filters, and compute distance
+  const filteredResources = resources.map((res) => {
+    if (userCoords) {
+      const distance = calculateDistanceInMiles(userCoords.lat, userCoords.lng, res.lat, res.lng);
+      return { ...res, distanceMiles: distance };
+    }
+    return res;
+  }).filter((res) => {
     if (activeCategory !== 'all' && res.category !== activeCategory) return false;
     if (filterPetFriendly && !res.petFriendly) return false;
     if (filterBedsOnly && (!res.bedsAvailable || res.bedsAvailable <= 0)) return false;
     if (filterVerifiedOnly && !(res.verificationTier === 'verified' || res.verificationTier === 'community_verified' || res.verified)) return false;
+    if (filterSavedOnly && !(userProfile.favoriteResourceIds || []).includes(res.id)) return false;
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -301,39 +345,39 @@ export const App: React.FC = () => {
   return (
     <div className="min-h-screen max-w-full overflow-x-hidden bg-[#F8FAFC] text-slate-900 flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
       
-      {/* TOP GLOBAL NAVBAR (Mobile-First Compact Header) */}
-      <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-2xs w-full">
-        <div className="max-w-7xl mx-auto px-2.5 sm:px-4 lg:px-6 py-2 flex items-center justify-between gap-2 min-w-0">
+      {/* TOP GLOBAL NAVBAR (Clean, Scalable & High Usability) */}
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-2xs w-full">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-2 flex items-center justify-between gap-3 min-w-0">
           
-          {/* Logo & Mascot Brand */}
+          {/* Brand & Mascot */}
           <div 
             onClick={() => setActiveTab('map')} 
-            className="flex items-center gap-2 cursor-pointer group shrink min-w-0"
+            className="flex items-center gap-2 cursor-pointer group shrink min-w-0 select-none"
           >
             <DaisyMascotBadge size="sm" animate={true} />
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <h1 className="font-heading font-bold text-indigo-700 text-sm sm:text-base tracking-tight truncate">
+                <span className="font-heading font-extrabold text-indigo-700 text-sm sm:text-base tracking-tight truncate">
                   Daisy's Helping Paws
-                </h1>
-                <span className="hidden xl:inline-block px-1.5 py-0.5 rounded-md bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-bold">
-                  24/7 Aid
+                </span>
+                <span className="hidden md:inline-flex px-1.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold">
+                  24/7 Live Aid
                 </span>
               </div>
               <p className="text-[10px] text-slate-500 font-medium hidden sm:block truncate">
-                Homeless Resources, Medical, Pets & Legal Advocacy
+                Community Shelter, Pets, Medical & Autonomous Care
               </p>
             </div>
           </div>
 
-          {/* Desktop Navigation Links (Responsive, Compact) */}
-          <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 shrink min-w-0">
+          {/* Desktop Primary Navigation Bar */}
+          <nav className="hidden lg:flex items-center gap-1 bg-slate-100/90 p-1 rounded-xl border border-slate-200 shrink min-w-0">
             <button
               onClick={() => setActiveTab('map')}
-              className={`px-2.5 xl:px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap ${
                 activeTab === 'map'
-                  ? 'bg-white text-indigo-900 shadow-xs border border-indigo-100'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                  ? 'bg-white text-indigo-700 shadow-xs border border-slate-200/80'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
               }`}
             >
               <MapPin className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
@@ -342,10 +386,10 @@ export const App: React.FC = () => {
 
             <button
               onClick={() => setActiveTab('workspace')}
-              className={`px-2.5 xl:px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap ${
                 activeTab === 'workspace'
-                  ? 'bg-white text-indigo-900 shadow-xs border border-indigo-100'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                  ? 'bg-white text-rose-700 shadow-xs border border-slate-200/80'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
               }`}
             >
               <HardDrive className="w-3.5 h-3.5 text-rose-600 shrink-0" />
@@ -354,14 +398,14 @@ export const App: React.FC = () => {
 
             <button
               onClick={() => setActiveTab('advisors')}
-              className={`px-2.5 xl:px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap ${
                 activeTab === 'advisors'
-                  ? 'bg-white text-indigo-900 shadow-xs border border-indigo-100'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                  ? 'bg-white text-blue-700 shadow-xs border border-slate-200/80'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
               }`}
             >
               <Bot className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-              <span>AI Care Team</span>
+              <span>Care Team</span>
             </button>
 
             <button
@@ -369,10 +413,10 @@ export const App: React.FC = () => {
                 setPreselectedFormId(undefined);
                 setActiveTab('forms');
               }}
-              className={`px-2.5 xl:px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap ${
                 activeTab === 'forms'
-                  ? 'bg-white text-indigo-900 shadow-xs border border-indigo-100'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                  ? 'bg-white text-purple-700 shadow-xs border border-slate-200/80'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
               }`}
             >
               <FileText className="w-3.5 h-3.5 text-purple-600 shrink-0" />
@@ -381,43 +425,44 @@ export const App: React.FC = () => {
 
             <button
               onClick={() => setActiveTab('pets')}
-              className={`px-2.5 xl:px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap ${
                 activeTab === 'pets'
-                  ? 'bg-white text-indigo-900 shadow-xs border border-indigo-100'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                  ? 'bg-white text-emerald-700 shadow-xs border border-slate-200/80'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
               }`}
             >
               <Dog className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-              <span>Pet Care</span>
+              <span>Pet Sanctuary</span>
             </button>
 
             <button
               onClick={() => setActiveTab('profile')}
-              className={`px-2.5 xl:px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap ${
                 activeTab === 'profile'
-                  ? 'bg-white text-indigo-900 shadow-xs border border-indigo-100'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                  ? 'bg-white text-amber-700 shadow-xs border border-slate-200/80'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
               }`}
             >
               <User className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-              <span>My Vault</span>
+              <span>Vault</span>
             </button>
           </nav>
 
-          {/* Header Action Buttons & Emergency Pill */}
+          {/* Quick Support & Emergency Action Bar */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {/* Quick specialist avatar cluster on extra large screens */}
-            <div className="hidden 2xl:flex -space-x-1.5 items-center">
-              <div className="w-7 h-7 rounded-full bg-blue-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-blue-600" title="Dr. Morgan (Medical MD)">DR</div>
-              <div className="w-7 h-7 rounded-full bg-green-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-green-600" title="Dr. Bailey (Daisy Vet)">VT</div>
-              <div className="w-7 h-7 rounded-full bg-purple-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-purple-600" title="Jordan Vance (Legal Defense)">LW</div>
-              <div className="w-7 h-7 rounded-full bg-pink-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-pink-600" title="Rowan (Therapy & Calm)">TH</div>
-            </div>
+            <button
+              onClick={() => setShowPocketDirectoryModal(true)}
+              className="px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border border-indigo-200 text-xs font-bold hidden sm:flex items-center gap-1.5 transition shadow-2xs"
+              title="Print or view 1-page pocket resource guide"
+            >
+              <Printer className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+              <span>Pocket Guide</span>
+            </button>
 
             <button
               onClick={() => setShowApkModal(true)}
-              className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold hidden xl:flex items-center gap-1.5 transition shadow-2xs"
-              title="Android APK download & autonomous phone calling/texting"
+              className="px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold hidden xl:flex items-center gap-1.5 transition shadow-2xs"
+              title="Android APK download"
             >
               <Smartphone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
               <span>APK</span>
@@ -425,24 +470,24 @@ export const App: React.FC = () => {
 
             <button
               onClick={() => setShowGroundingModal(true)}
-              className="px-2.5 py-1 rounded-lg bg-pink-50 hover:bg-pink-100 text-pink-700 border border-pink-200 text-xs font-semibold hidden lg:flex items-center gap-1.5 transition"
-              title="Calm panic or acute anxiety"
+              className="px-2.5 py-1.5 rounded-lg bg-pink-50 hover:bg-pink-100 text-pink-700 border border-pink-200 text-xs font-bold hidden md:flex items-center gap-1.5 transition"
+              title="Sensory grounding exercise"
             >
               <Heart className="w-3.5 h-3.5 text-pink-600 fill-pink-600 shrink-0" />
               <span>Calm</span>
             </button>
 
-            {/* Emergency Help Button */}
+            {/* Emergency Button */}
             <button
               onClick={() => setShowCrisisModal(true)}
-              className="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[11px] sm:text-xs font-bold shadow-xs flex items-center gap-1 transition shrink-0"
-              title="Emergency Help & Crisis Lines"
+              className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition shrink-0 active:scale-95"
+              title="Immediate Crisis Lines"
             >
-              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-              <span>Emergency</span>
+              <AlertCircle className="w-3.5 h-3.5 shrink-0 animate-pulse" />
+              <span>988 Crisis</span>
             </button>
 
-            {/* Mobile quick more menu button */}
+            {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(true)}
               className="lg:hidden p-1.5 rounded-lg text-slate-700 hover:bg-slate-100 transition shrink-0"
@@ -456,28 +501,24 @@ export const App: React.FC = () => {
 
       {/* MOBILE MODAL DRAWER OVERLAY (Non-Intrusive, Never Pushes Content Down) */}
       {mobileMenuOpen && (
-        <div 
-          className="fixed inset-0 z-50 flex flex-col justify-end bg-slate-900/60 backdrop-blur-xs animate-fade-in lg:hidden"
-          onClick={() => setMobileMenuOpen(false)}
-        >
-          <div 
-            className="bg-white rounded-t-2xl p-4 space-y-2 border-t border-slate-200 max-h-[85vh] overflow-y-auto shadow-2xl animate-slide-up safe-bottom-padding"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-start justify-end lg:hidden animate-fade-in">
+          <div className="w-full max-w-xs sm:max-w-sm h-full bg-white shadow-2xl p-4 flex flex-col space-y-4 overflow-y-auto">
+            <div className="flex items-center justify-between border-b pb-3">
               <div className="flex items-center gap-2">
-                <DaisyMascotBadge size="sm" animate={false} />
-                <span className="font-heading font-bold text-sm text-slate-900">Daisy's Care Tools</span>
+                <DaisyMascotBadge size="sm" animate={true} />
+                <span className="font-heading font-extrabold text-indigo-700 text-sm">
+                  Daisy's Helping Paws
+                </span>
               </div>
-              <button 
+              <button
                 onClick={() => setMobileMenuOpen(false)}
-                className="p-1 rounded-full text-slate-400 hover:bg-slate-100"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-1.5 pt-1">
+            <div className="space-y-1.5 flex-1">
               <button
                 onClick={() => {
                   setActiveTab('map');
@@ -487,8 +528,8 @@ export const App: React.FC = () => {
               >
                 <MapPin className="w-4 h-4 text-indigo-600 shrink-0" />
                 <div className="min-w-0">
-                  <div className="font-bold text-slate-900">🗺️ Google Maps & Shelters</div>
-                  <div className="text-[10px] text-slate-500">Live bed counter, pantries & hygiene</div>
+                  <div className="font-bold text-slate-900">🗺️ GPS Shelter & Resource Map</div>
+                  <div className="text-[10px] text-slate-500">Find real-time open beds, food, clinics</div>
                 </div>
               </button>
 
@@ -501,8 +542,8 @@ export const App: React.FC = () => {
               >
                 <HardDrive className="w-4 h-4 text-rose-600 shrink-0" />
                 <div className="min-w-0">
-                  <div className="font-bold text-slate-900">💼 Google Workspace Suite</div>
-                  <div className="text-[10px] text-slate-500">Gmail, Calendar, Tasks, Chat, Contacts & Drive</div>
+                  <div className="font-bold text-slate-900">📂 Google Workspace Hub</div>
+                  <div className="text-[10px] text-slate-500">Drive, Docs, Sheets & Forms management</div>
                 </div>
               </button>
 
@@ -566,6 +607,20 @@ export const App: React.FC = () => {
               <div className="grid grid-cols-2 gap-2 pt-2">
                 <button
                   onClick={() => {
+                    setShowPocketDirectoryModal(true);
+                    setMobileMenuOpen(false);
+                  }}
+                  className="p-2.5 rounded-xl text-left text-xs font-semibold flex flex-col gap-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border border-indigo-200"
+                >
+                  <div className="flex items-center gap-1.5 font-bold">
+                    <Printer className="w-4 h-4 text-indigo-700" />
+                    <span>Pocket Guide</span>
+                  </div>
+                  <span className="text-[10px] text-indigo-700">1-Page Printable Card</span>
+                </button>
+
+                <button
+                  onClick={() => {
                     setShowApkModal(true);
                     setMobileMenuOpen(false);
                   }}
@@ -575,21 +630,23 @@ export const App: React.FC = () => {
                     <Smartphone className="w-4 h-4 text-emerald-700" />
                     <span>Android APK</span>
                   </div>
-                  <span className="text-[10px] text-emerald-700">Native Telephony & Offline GPS</span>
+                  <span className="text-[10px] text-emerald-700">Offline & Native Telephony</span>
                 </button>
+              </div>
 
+              <div className="pt-2">
                 <button
                   onClick={() => {
                     setShowGroundingModal(true);
                     setMobileMenuOpen(false);
                   }}
-                  className="p-2.5 rounded-xl text-left text-xs font-semibold flex flex-col gap-1 bg-pink-50 hover:bg-pink-100 text-pink-900 border border-pink-200"
+                  className="w-full p-2.5 rounded-xl text-left text-xs font-semibold flex flex-col gap-1 bg-pink-50 hover:bg-pink-100 text-pink-900 border border-pink-200"
                 >
                   <div className="flex items-center gap-1.5 font-bold">
                     <Heart className="w-4 h-4 text-pink-600 fill-pink-600" />
-                    <span>Calm (5-4-3-2-1)</span>
+                    <span>Calm Sensory Exercise (5-4-3-2-1)</span>
                   </div>
-                  <span className="text-[10px] text-pink-700">De-escalate panic & stress</span>
+                  <span className="text-[10px] text-pink-700">De-escalate street anxiety, panic, or overwhelm</span>
                 </button>
               </div>
             </div>
@@ -604,16 +661,23 @@ export const App: React.FC = () => {
         {activeTab === 'map' && (
           <div className="flex-1 flex flex-col space-y-3 w-full min-w-0">
             
+            {/* Severe Weather Protocol Alert Banner */}
+            <SevereWeatherAlertBanner
+              onFilterWarmingCooling={() => {
+                setActiveCategory('warming_cooling');
+              }}
+            />
+
             {/* Search & Mobile View Switcher Bar (Responsive CSS Grid) */}
-            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-3 bg-white p-2.5 sm:p-3 rounded-xl border border-slate-200 shadow-xs w-full min-w-0 items-center">
-              <div className="sm:col-span-6 lg:col-span-5 relative w-full min-w-0">
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-3 bg-white p-2.5 sm:p-3 rounded-2xl border border-slate-200 shadow-xs w-full min-w-0 items-center">
+              <div className="sm:col-span-6 lg:col-span-4 relative w-full min-w-0">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search shelters, pantries, clinics, showers..."
-                  className="w-full pl-9 pr-4 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition"
+                  className="w-full pl-9 pr-4 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition"
                 />
                 {searchQuery && (
                   <button
@@ -627,10 +691,10 @@ export const App: React.FC = () => {
 
               {/* Map Engine Selector (Google vs OpenStreetMap) */}
               <div className="sm:col-span-6 lg:col-span-3 flex items-center justify-start sm:justify-center gap-1.5 min-w-0">
-                <div className="inline-flex bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs font-semibold shrink-0">
+                <div className="inline-flex bg-slate-100 p-0.5 rounded-xl border border-slate-200 text-xs font-semibold shrink-0">
                   <button
                     onClick={() => setMapEngine('google')}
-                    className={`px-2 py-1 rounded-md transition text-xs ${
+                    className={`px-2.5 py-1 rounded-lg transition text-xs ${
                       mapEngine === 'google'
                         ? 'bg-indigo-600 text-white shadow-2xs font-bold'
                         : 'text-slate-600 hover:text-slate-900'
@@ -640,7 +704,7 @@ export const App: React.FC = () => {
                   </button>
                   <button
                     onClick={() => setMapEngine('osm')}
-                    className={`px-2 py-1 rounded-md transition text-xs ${
+                    className={`px-2.5 py-1 rounded-lg transition text-xs ${
                       mapEngine === 'osm'
                         ? 'bg-slate-900 text-white shadow-2xs font-bold'
                         : 'text-slate-600 hover:text-slate-900'
@@ -651,12 +715,45 @@ export const App: React.FC = () => {
                 </div>
               </div>
 
+              {/* Saved filter pill & Guide direct launcher */}
+              <div className="sm:col-span-12 lg:col-span-5 flex items-center justify-between sm:justify-end gap-2 min-w-0">
+                <button
+                  onClick={() => setFilterSavedOnly(!filterSavedOnly)}
+                  className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 border shrink-0 ${
+                    filterSavedOnly
+                      ? 'bg-rose-600 text-white border-rose-700 shadow-xs'
+                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                  }`}
+                  title="Show only bookmarked locations"
+                >
+                  <Heart className={`w-3.5 h-3.5 ${filterSavedOnly ? 'fill-white' : 'text-rose-500'}`} />
+                  <span>Saved ({(userProfile.favoriteResourceIds || []).length})</span>
+                </button>
+
+                <button
+                  onClick={() => setShowPocketDirectoryModal(true)}
+                  className="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border border-indigo-200 rounded-xl text-xs font-bold flex items-center gap-1 transition shadow-2xs shrink-0"
+                  title="Open printable pocket directory"
+                >
+                  <Printer className="w-3.5 h-3.5 text-indigo-600" />
+                  <span className="hidden sm:inline">Pocket Guide</span>
+                </button>
+
+                <button
+                  onClick={() => setShowAddResourceModal(true)}
+                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition shrink-0"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Report</span>
+                </button>
+              </div>
+
               {/* Mobile Map / List / Split Segmented Control */}
-              <div className="lg:hidden sm:col-span-12 flex w-full items-center justify-between gap-1.5 min-w-0">
-                <div className="grid grid-cols-3 bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs font-semibold flex-1 min-w-0">
+              <div className="lg:hidden sm:col-span-12 flex w-full items-center justify-between gap-1.5 min-w-0 pt-1">
+                <div className="grid grid-cols-3 bg-slate-100 p-0.5 rounded-xl border border-slate-200 text-xs font-semibold flex-1 min-w-0">
                   <button
                     onClick={() => setMapMobileViewMode('map')}
-                    className={`px-1.5 py-1 rounded-md transition text-center truncate ${
+                    className={`px-1.5 py-1 rounded-lg transition text-center truncate ${
                       mapMobileViewMode === 'map'
                         ? 'bg-white text-indigo-900 shadow-2xs font-bold'
                         : 'text-slate-600 hover:text-slate-900'
@@ -666,7 +763,7 @@ export const App: React.FC = () => {
                   </button>
                   <button
                     onClick={() => setMapMobileViewMode('split')}
-                    className={`px-1.5 py-1 rounded-md transition text-center truncate ${
+                    className={`px-1.5 py-1 rounded-lg transition text-center truncate ${
                       mapMobileViewMode === 'split'
                         ? 'bg-white text-indigo-900 shadow-2xs font-bold'
                         : 'text-slate-600 hover:text-slate-900'
@@ -676,7 +773,7 @@ export const App: React.FC = () => {
                   </button>
                   <button
                     onClick={() => setMapMobileViewMode('list')}
-                    className={`px-1.5 py-1 rounded-md transition text-center truncate ${
+                    className={`px-1.5 py-1 rounded-lg transition text-center truncate ${
                       mapMobileViewMode === 'list'
                         ? 'bg-white text-indigo-900 shadow-2xs font-bold'
                         : 'text-slate-600 hover:text-slate-900'
@@ -685,29 +782,6 @@ export const App: React.FC = () => {
                     📋 List ({filteredResources.length})
                   </button>
                 </div>
-
-                <button
-                  onClick={() => setShowAddResourceModal(true)}
-                  className="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1 shadow-xs transition shrink-0"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Report</span>
-                </button>
-              </div>
-
-              {/* Desktop Showing Count & Report Button */}
-              <div className="hidden lg:flex lg:col-span-4 items-center justify-end gap-2.5 min-w-0">
-                <span className="text-xs text-slate-500 font-medium whitespace-nowrap">
-                  Showing <span className="font-bold text-slate-800">{filteredResources.length}</span> resources
-                </span>
-
-                <button
-                  onClick={() => setShowAddResourceModal(true)}
-                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs transition shrink-0"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Report Resource</span>
-                </button>
               </div>
             </div>
 
@@ -788,6 +862,7 @@ export const App: React.FC = () => {
                         setFilterPetFriendly(false);
                         setFilterBedsOnly(false);
                         setFilterVerifiedOnly(false);
+                        setFilterSavedOnly(false);
                       }}
                       className="mt-2 px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-semibold"
                     >
@@ -801,6 +876,9 @@ export const App: React.FC = () => {
                       resource={res}
                       onSelect={(r) => setSelectedResource(r)}
                       isSelected={selectedResource?.id === res.id}
+                      isFavorite={(userProfile.favoriteResourceIds || []).includes(res.id)}
+                      onToggleFavorite={handleToggleFavorite}
+                      onQuickCheckIn={(r) => setQuickCheckInResource(r)}
                     />
                   ))
                 )}
@@ -868,6 +946,12 @@ export const App: React.FC = () => {
             userProfile={userProfile}
             onUpdateProfile={handleUpdateProfile}
             onDeleteDocument={handleDeleteDocument}
+            resources={resources}
+            onSelectResource={(r) => {
+              setSelectedResource(r);
+              setActiveTab('map');
+            }}
+            onToggleFavorite={handleToggleFavorite}
           />
         )}
       </main>
@@ -879,6 +963,24 @@ export const App: React.FC = () => {
         onPostReview={handlePostReview}
         onPostCheckIn={handlePostCheckIn}
         onVerifyResource={handleVerifyResource}
+        isFavorite={selectedResource ? (userProfile.favoriteResourceIds || []).includes(selectedResource.id) : false}
+        onToggleFavorite={handleToggleFavorite}
+        onAskAdvisor={(res) => {
+          setActiveTab('advisors');
+        }}
+      />
+
+      <QuickCheckInModal
+        isOpen={Boolean(quickCheckInResource)}
+        onClose={() => setQuickCheckInResource(null)}
+        resource={quickCheckInResource}
+        onPostCheckIn={handlePostCheckIn}
+      />
+
+      <PocketResourceDirectoryModal
+        isOpen={showPocketDirectoryModal}
+        onClose={() => setShowPocketDirectoryModal(false)}
+        resources={resources}
       />
 
       <AddResourceModal
@@ -908,7 +1010,7 @@ export const App: React.FC = () => {
         <div className="fixed bottom-16 sm:bottom-12 right-3 sm:right-5 z-30">
           <button
             onClick={() => setActiveTab('advisors')}
-            className="px-3 py-2 sm:px-3.5 sm:py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg border border-indigo-400/30 flex items-center gap-2 transition transform hover:scale-105"
+            className="px-3 py-2 sm:px-3.5 sm:py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl shadow-lg border border-indigo-400/30 flex items-center gap-2 transition transform hover:scale-105"
             title="Chat with Daisy & AI Specialists"
           >
             <DaisyMascotBadge size="sm" animate={true} />

@@ -56,6 +56,18 @@ export interface Resource {
   recentStatus?: string;
   servicesOffered: string[];
   intakeRequirements?: string;
+  distanceMiles?: number;
+}
+
+export interface SevereWeatherAlert {
+  id: string;
+  type: 'freeze' | 'heat' | 'air_quality' | 'storm';
+  title: string;
+  description: string;
+  temperature?: string;
+  protocolActive: boolean;
+  unlockedServices: string[];
+  expiresAt?: string;
 }
 
 export interface Review {
@@ -170,6 +182,7 @@ export interface UserProfile {
   notes?: string;
   savedDocuments: SavedDocument[];
   trackedApplications?: TrackedApplication[];
+  favoriteResourceIds?: string[];
 }
 
 export type AiAdvisorRole = 
